@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dépôt — Contrôle du matériel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c0e; --glow:rgba(19,142,110,.30);
+  --card:#111a1d; --card2:#162126; --line:#1f2d33; --line2:#26363d;
+  --text:#e9f1f1; --muted:#8b9aa1; --dim:#64757c;
+  --green:#18d18d; --green2:#12b87a; --green-ink:#03221a; --green-dim:rgba(24,209,141,.14);
+  --amber:#e0a33c; --amber-dim:rgba(224,163,60,.14);
+  --red:#ff6f59; --red-dim:rgba(255,111,89,.13);
+  --blue:#6fa8dc;
+}
+:root[data-theme="light"]{
+  --bg:#f4f6f6; --glow:rgba(19,142,110,.12);
+  --card:#fff; --card2:#f0f3f3; --line:#e2e7e7; --line2:#d7dedd;
+  --text:#101718; --muted:#5f6e73; --dim:#8b989d;
+  --green:#0f9d6b; --green2:#0c8259; --green-ink:#fff; --green-dim:rgba(15,157,107,.12);
+  --amber:#9a6a13; --amber-dim:rgba(154,106,19,.12);
+  --red:#c2402c; --red-dim:rgba(194,64,44,.10);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{font:15px/1.5 'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;min-height:100vh;
+  background-image:radial-gradient(760px 420px at 6% -6%,var(--glow),transparent 62%);background-attachment:fixed}
+h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.025em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+::selection{background:var(--green-dim)}
+
+/* ---------- coque ---------- */
+.wrap{max-width:470px;margin:0 auto;padding:0 18px 132px;min-height:100vh}
+.hdr{display:flex;align-items:center;gap:12px;padding:20px 0 16px;position:sticky;top:0;z-index:20;
+  background:linear-gradient(var(--bg) 62%,transparent)}
+.hdr .logo{width:42px;height:42px;border-radius:13px;background:var(--green-dim);border:1px solid var(--line2);
+  display:grid;place-items:center;font-weight:800;color:var(--green);font-size:17px;flex:none}
+.hdr .nm{flex:1;min-width:0}
+.hdr .nm b{display:block;font-size:16px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr .nm span{font-size:12.5px;color:var(--muted)}
+.iconbtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line2);background:var(--card);
+  display:grid;place-items:center;cursor:pointer;color:var(--muted);flex:none;font-size:13px;font-weight:600}
+.iconbtn:hover{border-color:var(--green);color:var(--green)}
+.iconbtn.me{color:var(--text)}
+
+.eyebrow{font-size:13px;color:var(--muted);margin-bottom:2px}
+.title{font-size:30px;line-height:1.12;margin-bottom:18px;letter-spacing:-.035em}
+
+/* ---------- cartes ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin-bottom:12px}
+.card.flat{background:var(--card2)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px 17px;min-width:0}
+.stat .l{font-size:12.5px;color:var(--muted);font-weight:500}
+.stat .v{font-size:31px;font-weight:700;letter-spacing:-.04em;line-height:1.15;margin:3px 0 2px}
+.stat .s{font-size:12px;color:var(--dim)}
+.stat .s.warn{color:var(--amber)}
+.stat .s.bad{color:var(--red)}
+.stat.bad .v{color:var(--red)}
+.big{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.big .v{font-size:31px;font-weight:700;letter-spacing:-.04em;margin-top:2px}
+.pct{color:var(--green);font-size:13px;font-weight:600}
+.track{height:7px;border-radius:99px;background:var(--card2);overflow:hidden;margin-top:12px}
+.track i{display:block;height:100%;background:var(--green);border-radius:99px}
+.track.amber i{background:var(--amber)}
+.track.red i{background:var(--red)}
+
+/* ---------- boutons ---------- */
+.cta{display:block;width:100%;padding:17px 20px;border:0;border-radius:15px;background:var(--green);color:var(--green-ink);
+  font-size:15.5px;font-weight:700;cursor:pointer;margin:16px 0 22px;letter-spacing:-.01em}
+.cta:hover{background:var(--green2)}
+.cta.sec{background:var(--card);color:var(--text);border:1px solid var(--line2)}
+.cta.sec:hover{border-color:var(--green);color:var(--green)}
+.btn{padding:11px 14px;border:1px solid var(--line2);background:var(--card2);color:var(--text);border-radius:12px;
+  cursor:pointer;font-weight:600;font-size:13.5px;line-height:1.2}
+.btn:hover{border-color:var(--line2);background:var(--line)}
+.btn.go{background:var(--green);border-color:var(--green);color:var(--green-ink)}
+.btn.go:hover{background:var(--green2)}
+.btn.bad{color:var(--red);border-color:var(--line2)}
+.btn.bad:hover{background:var(--red-dim);border-color:var(--red)}
+.btn.sm{padding:7px 12px;font-size:12.5px;border-radius:10px}
+.btn[disabled]{opacity:.38;cursor:not-allowed}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
+.link{background:none;border:0;padding:0;color:var(--green);font-weight:600;font-size:13px;cursor:pointer}
+.link:hover{text-decoration:underline}
+
+/* ---------- sections ---------- */
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 11px}
+.sec h2{font-size:17px;letter-spacing:-.025em}
+
+/* ---------- lignes ---------- */
+.row{display:flex;gap:12px;align-items:center}
+.dot{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:10.5px;font-weight:700;letter-spacing:.02em}
+.dot.out{background:var(--amber-dim);color:var(--amber)}
+.dot.in{background:var(--green-dim);color:var(--green)}
+.dot.mute{background:var(--card2);color:var(--muted)}
+.dot.big{font-size:15px}
+.grow{flex:1;min-width:0}
+.ttl{font-weight:600;font-size:14.5px;letter-spacing:-.01em}
+.sub{font-size:12.5px;color:var(--muted);margin-top:1px}
+.right{text-align:right;flex:none}
+.right .n{font-size:20px;font-weight:700;color:var(--green);letter-spacing:-.03em;line-height:1.1}
+.right .n.zero{color:var(--dim)}
+.right .u{font-size:11.5px;color:var(--dim)}
+.ago{font-size:12px;color:var(--dim);flex:none}
+
+.tag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:600}
+.tag.green{background:var(--green-dim);color:var(--green)}
+.tag.amber{background:var(--amber-dim);color:var(--amber)}
+.tag.red{background:var(--red-dim);color:var(--red)}
+.tag.mute{background:var(--card2);color:var(--muted)}
+
+/* ---------- segmenté ---------- */
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:4px;margin-bottom:16px}
+.seg button{flex:1;padding:9px 6px;border:0;background:none;border-radius:99px;color:var(--muted);font-weight:600;font-size:13.5px;cursor:pointer}
+.seg button.on{background:var(--green);color:var(--green-ink)}
+
+/* ---------- champs ---------- */
+.f{margin-bottom:13px}
+.f label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.f input,.f select,.f textarea{width:100%;padding:13px 14px;border:1px solid var(--line2);border-radius:13px;
+  background:var(--card2);color:var(--text);font-size:15px}
+.f input::placeholder{color:var(--dim)}
+.f textarea{min-height:64px;resize:vertical}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:0 11px}
+.hint{font-size:12.5px;color:var(--dim);margin-top:9px;line-height:1.45}
+.search{width:100%;padding:13px 16px;border:1px solid var(--line2);border-radius:14px;background:var(--card);color:var(--text);margin-bottom:14px}
+
+/* ---------- vide ---------- */
+.empty{text-align:center;padding:34px 20px;color:var(--muted);font-size:14px}
+.empty b{display:block;color:var(--text);font-size:16px;margin-bottom:5px;font-weight:700;letter-spacing:-.02em}
+
+/* ---------- nav basse ---------- */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;
+  padding:0 16px calc(16px + env(safe-area-inset-bottom));pointer-events:none}
+.tabs .in{display:flex;gap:2px;background:var(--card);border:1px solid var(--line2);border-radius:22px;
+  padding:8px 6px;width:100%;max-width:434px;pointer-events:auto;box-shadow:0 12px 34px rgba(0,0,0,.42)}
+.tabs button{flex:1;background:none;border:0;color:var(--dim);cursor:pointer;padding:5px 2px;border-radius:15px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;font-weight:600;position:relative}
+.tabs button.on{color:var(--green)}
+.tabs svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs .bdg{position:absolute;top:-1px;right:50%;transform:translateX(20px);background:var(--red);color:#fff;
+  font-size:9.5px;font-weight:700;border-radius:99px;min-width:16px;height:16px;display:grid;place-items:center;padding:0 4px}
+
+/* ---------- connexion ---------- */
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:26px 18px}
+.login .in{width:100%;max-width:400px}
+.login .mark{width:56px;height:56px;border-radius:17px;background:var(--green-dim);border:1px solid var(--line2);
+  display:grid;place-items:center;font-size:23px;font-weight:800;color:var(--green);margin-bottom:20px}
+.login h1{font-size:28px;letter-spacing:-.035em;margin-bottom:6px}
+.login p{color:var(--muted);margin:0 0 26px;font-size:14.5px}
+.pick{display:flex;gap:14px;align-items:center;width:100%;text-align:left;padding:17px 18px;margin-bottom:11px;
+  border:1px solid var(--line);background:var(--card);border-radius:17px;cursor:pointer;color:inherit}
+.pick:hover{border-color:var(--green)}
+.pick .ic{width:44px;height:44px;border-radius:13px;background:var(--card2);display:grid;place-items:center;font-size:19px;flex:none}
+.pick b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.pick span{font-size:12.5px;color:var(--muted);line-height:1.4}
+
+/* ---------- feuille modale ---------- */
+.ov{position:fixed;inset:0;background:rgba(3,7,8,.72);z-index:60;display:flex;align-items:flex-end;justify-content:center;
+  padding:0;overflow-y:auto}
+.sheet{background:var(--card);border:1px solid var(--line2);border-radius:24px 24px 0 0;width:100%;max-width:470px;
+  padding:8px 20px calc(24px + env(safe-area-inset-bottom));animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(22px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}}
+.sheet .grab{width:38px;height:4px;border-radius:99px;background:var(--line2);margin:8px auto 16px}
+.sheet h2{font-size:20px;letter-spacing:-.03em;margin-bottom:4px}
+.sheet .lead{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+.sheet .acts{display:flex;gap:10px;margin-top:18px}
+.sheet .acts .btn{flex:1;padding:14px;border-radius:14px;font-size:14.5px}
+@media (min-width:560px){
+  .ov{align-items:center;padding:24px}
+  .sheet{border-radius:24px;padding-bottom:24px}
+}
+
+.railfoot{display:none}
+.thumb{width:100%;aspect-ratio:4/3;border-radius:13px 13px 0 0;object-fit:cover;display:block;background:var(--card2)}
+.thumb.ph{display:grid;place-items:center;color:var(--dim);font-size:26px}
+.pcard{padding:0;overflow:hidden}
+.pcard .pin{padding:13px 16px 15px}
+.pcard .ttl{font-size:14.5px}
+.mgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
+.mpick{width:100%;aspect-ratio:4/3;border-radius:13px;object-fit:cover;background:var(--card2);display:block;margin-bottom:8px}
+.mpick.ph{display:grid;place-items:center;color:var(--dim);font-size:24px;border:1px dashed var(--line2)}
+.photobtn{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px dashed var(--line2);border-radius:12px;background:var(--card2);cursor:pointer;color:var(--muted);font-size:13.5px;width:100%}
+.photobtn:hover{border-color:var(--green);color:var(--green)}
+@media (min-width:700px){.mgrid{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:1024px){.mgrid{grid-template-columns:repeat(4,1fr)}}
+/* ---------- tablette & ordinateur ---------- */
+.cols{display:block}
+.list{display:block}
+@media (min-width:700px){
+  .wrap{max-width:720px;padding:0 24px 128px}
+  .tabs .in{max-width:672px}
+  .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(304px,1fr));gap:12px;align-items:start}
+  .list>.card{margin-bottom:0}
+  .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .stats>.stat:only-child{grid-column:span 4}
+  .stats>.stat:nth-child(1):nth-last-child(2),.stats>.stat:nth-child(2):nth-last-child(1){grid-column:span 2}
+  .cta{max-width:none}
+  .feed{max-width:620px}
+}
+@media (min-width:1024px){
+  .tabs{top:0;bottom:0;right:auto;width:244px;padding:0;display:block}
+  .tabs .in{flex-direction:column;gap:3px;height:100%;max-width:none;border:0;border-right:1px solid var(--line);
+    border-radius:0;box-shadow:none;padding:96px 14px 22px;background:var(--card);overflow-y:auto}
+  .tabs button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;padding:11px 13px;
+    font-size:14px;border-radius:12px}
+  .tabs button.on{background:var(--green-dim)}
+  .tabs svg{width:19px;height:19px}
+  .tabs .bdg{position:static;transform:none;margin-left:auto}
+  .railfoot{display:block;margin-top:auto;padding-top:12px;border-top:1px solid var(--line);width:100%}
+  .railfoot button{display:flex;flex-direction:row;justify-content:flex-start;gap:12px;width:100%;
+    background:none;border:0;color:var(--dim);cursor:pointer;padding:11px 13px;border-radius:12px;font-size:14px;font-weight:600}
+  .railfoot button:hover{color:var(--text)}
+  .railfoot svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .wrap{margin-left:244px;max-width:1180px;padding:0 40px 60px}
+  .hdr{position:fixed;top:0;left:0;width:244px;padding:22px 18px 0;background:none;z-index:31;display:block}
+  .hdr .logo{margin-bottom:9px}
+  .hdr .nm{margin-bottom:0}
+  .hdr .iconbtn{display:none}
+  .wrap>.eyebrow{padding-top:30px}
+  .cols{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:24px;align-items:start}
+  .title{font-size:34px}
+  .list{grid-template-columns:repeat(auto-fill,minmax(286px,1fr))}
+}
+@media (min-width:1024px) and (max-width:1200px){
+  .wrap{padding:0 26px 60px}
+}
+/* clavier/souris : cibles plus fines, survol net */
+@media (hover:hover) and (pointer:fine){
+  .card[data-a]:hover{border-color:var(--line2)}
+  .tabs button:hover{color:var(--text)}
+}
+
+/* ---------- toasts ---------- */
+.toasts{position:fixed;left:0;right:0;bottom:104px;z-index:80;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;padding:0 18px}
+.toast{background:var(--card2);border:1px solid var(--line2);color:var(--text);padding:12px 17px;border-radius:14px;
+  font-size:13.5px;font-weight:500;max-width:430px;box-shadow:0 10px 28px rgba(0,0,0,.45)}
+.toast.ok{border-color:var(--green);color:var(--green)}
+.toast.bad{border-color:var(--red);color:var(--red)}
+
+/* ---------- bon ---------- */
+.bon{font-size:13px}
+.bon .bh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.bon .meta{display:grid;grid-template-columns:1fr 1fr;gap:7px 14px;margin-bottom:16px;font-size:12.5px}
+.bon .meta span{color:var(--muted);display:block;font-size:11.5px}
+.bon table{width:100%;border-collapse:collapse}
+.bon th{font-size:11.5px;color:var(--muted);font-weight:500;text-align:left;padding:7px 0;border-bottom:1px solid var(--line)}
+.bon td{padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+.sig{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px;font-size:11.5px;color:var(--muted)}
+.sig div{border-top:1px solid var(--line2);padding-top:7px;min-height:52px}
+@media print{
+  body *{visibility:hidden}
+  #print,#print *{visibility:visible}
+  #print{position:absolute;inset:0;padding:26px;background:#fff;color:#000;font-size:12px}
+  #print .sig div{border-top:1px solid #999}
+  #print th,#print td{border-bottom:1px solid #ddd}
+  #print .meta span{color:#666}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="modal"></div>
+<div id="print"></div>
+<div class="toasts" id="toasts"></div>
+<input type="file" id="imp" accept="application/json" style="display:none">
+<input type="file" id="photo-in" accept="image/*" style="display:none">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const EPS=1e-6;
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const pad=n=>String(n).padStart(4,'0');
+const today=()=>new Date().toISOString().slice(0,10);
+const ymd=d=>d.toISOString().slice(0,10);
+const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:0};
+const fmtq=n=>{n=Math.round(n*1000)/1000;return n.toLocaleString('fr-FR',{maximumFractionDigits:3})};
+const fmtd=iso=>{if(!iso)return '';const p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0]};
+const money=n=>fmtq(Math.round(n*100)/100)+' '+(DB.settings.currency||'€');
+const val=id=>{const e=document.getElementById(id);return e?e.value:''};
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const days=(a,b)=>Math.max(0,Math.round((new Date(b)-new Date(a))/86400000));
+const initial=s=>(String(s||'?').trim()[0]||'?').toUpperCase();
+function ago(ts){const m=Math.floor((Date.now()-ts)/60000);
+  if(m<1)return 'à l\u2019instant'; if(m<60)return 'il y a '+m+' min';
+  const h=Math.floor(m/60); if(h<24)return 'il y a '+h+' h';
+  const d=Math.floor(h/24); return d<30?'il y a '+d+' j':'il y a '+Math.floor(d/30)+' mois'}
+
+const TYPE={restock:['Réappro.','in','REA'],issue:['Sortie','out','OUT'],'return':['Retour','in','RET'],
+  adjust:['Ajustement','mute','AJU'],writeoff:['Rebut','mute','REB']};
+const ICO={
+  home:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg>',
+  box:'<svg viewBox="0 0 24 24"><path d="M12 2.8 20.5 7v10L12 21.2 3.5 17V7z"/><path d="M3.5 7 12 11.4 20.5 7"/><path d="M12 11.4v9.8"/></svg>',
+  team:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 20c0-3.3 2.8-5.4 6.2-5.4s6.2 2.1 6.2 5.4"/><path d="M16.5 5.2a3 3 0 0 1 0 5.7"/><path d="M18.6 14.9c2 .7 3.4 2.3 3.4 4.4"/></svg>',
+  log:'<svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9.2 11h6M9.2 15h6"/></svg>',
+  check:'<svg viewBox="0 0 24 24"><path d="M20.5 6.5 9.6 17.4 3.9 11.7"/></svg>',
+  plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.2 2"/></svg>',
+  gear:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.2A1.6 1.6 0 0 0 7 19.3a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.2A1.6 1.6 0 0 0 2.7 7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H7a1.6 1.6 0 0 0 1-1.5V1a2 2 0 1 1 4 0v.2a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V7a1.6 1.6 0 0 0 1.5 1H23a2 2 0 1 1 0 4h-.2a1.6 1.6 0 0 0-1.4 1z"/></svg>',
+  out:'<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>'
+};
+
+function defaults(){return{items:[],teams:[],moves:[],requests:[],
+  settings:{company:'Dépôt',currency:'€',grace:0,sep:';',adminPin:'1234',requireApproval:false},
+  seq:{rea:0,bs:0,br:0},meta:{}}}
+let DB=defaults(), SESSION=null, DRAFT_PHOTO='';
+const state={view:'',q:'',qt:'',seg:'all',limit:20};
+
+/* ================= SUPABASE ================= */
+const SB_URL='https://biqbxpnoicmolpxwamhs.supabase.co';
+const SB_KEY='sb_publishable_5uD-iV4OwuQR5nHYZgfkyA_Elm1S-Gu';
+let SB=null, READY=false, SYNCERR=false;
+let SHADOW={items:{},teams:{},moves:{},requests:{}};
+let pushT=null, reloadT=null, lastPush=0;
+
+// ---- mappers app<->db (camelCase <-> snake_case) ----
+const M={
+  items:{
+    to:i=>({id:i.id,name:i.name,cat:i.cat||'',unit:i.unit||'pcs',cost:+i.cost||0,rate:+i.rate||0,
+      min:+i.min||0,loc:i.loc||'',returnable:!!i.returnable,photo_url:i.photo||'',notes:i.notes||'',archived:!!i.archived}),
+    from:r=>({id:r.id,name:r.name,cat:r.cat||'',unit:r.unit||'pcs',cost:+r.cost||0,rate:+r.rate||0,
+      min:+r.min||0,loc:r.loc||'',returnable:!!r.returnable,photo:r.photo_url||'',notes:r.notes||'',archived:!!r.archived})},
+  teams:{
+    to:t=>({id:t.id,name:t.name,leader:t.leader||'',phone:t.phone||'',site:t.site||'',pin:t.pin||'',archived:!!t.archived}),
+    from:r=>({id:r.id,name:r.name,leader:r.leader||'',phone:r.phone||'',site:r.site||'',pin:r.pin||'',archived:!!r.archived,notes:''})},
+  moves:{
+    to:m=>({id:m.id,slip:m.slip||'',date:m.date,ts:m.ts||0,type:m.type,item_id:m.itemId||null,team_id:m.teamId||null,
+      qty:+m.qty||0,unit_cost:+m.unitCost||0,rate:+m.rate||0,due:m.due||null,site:m.site||'',note:m.note||''}),
+    from:r=>({id:r.id,slip:r.slip||'',date:r.date,ts:+r.ts||0,type:r.type,itemId:r.item_id,teamId:r.team_id,
+      qty:+r.qty||0,unitCost:+r.unit_cost||0,rate:+r.rate||0,due:r.due||null,site:r.site||'',note:r.note||''})},
+  requests:{
+    to:q=>({id:q.id,type:q.type,team_id:q.teamId,lines:q.lines||[],date:q.date||null,ts:q.ts||0,status:q.status||'pending',
+      due:q.due||null,site:q.site||'',by:q.by||'',note:q.note||'',slip:q.slip||'',decided_note:q.decidedNote||'',decided_at:q.decidedAt||null}),
+    from:r=>({id:r.id,type:r.type,teamId:r.team_id,lines:r.lines||[],date:r.date||null,ts:+r.ts||0,status:r.status||'pending',
+      due:r.due||null,site:r.site||'',by:r.by||'',note:r.note||'',slip:r.slip||'',decidedNote:r.decided_note||'',decidedAt:r.decided_at||null})}
+};
+const TABLES=['items','teams','moves','requests'];
+
+async function sbInit(){
+  try{
+    SB=window.supabase.createClient(SB_URL,SB_KEY);
+    await sbLoad();
+    READY=true;
+    sbSubscribe();
+    return true;
+  }catch(e){SYNCERR=true;return false}
+}
+async function sbLoad(){
+  const out={};
+  for(const t of TABLES){
+    const {data,error}=await SB.from(t).select('*');
+    if(error) throw error;
+    out[t]=(data||[]).map(M[t].from);
+  }
+  const kv=await SB.from('kv').select('*');
+  const settings=Object.assign(defaults().settings), seq=Object.assign(defaults().seq);
+  if(kv.data){for(const row of kv.data){if(row.k==='settings')Object.assign(settings,row.v||{});if(row.k==='seq')Object.assign(seq,row.v||{})}}
+  DB={items:out.items,teams:out.teams,moves:out.moves,requests:out.requests,settings,seq,meta:{}};
+  // rebuild shadow
+  SHADOW={items:{},teams:{},moves:{},requests:{}};
+  for(const t of TABLES) DB[t].forEach(o=>{SHADOW[t][o.id]=JSON.stringify(M[t].to(o))});
+  SHADOW._settings=JSON.stringify(settings); SHADOW._seq=JSON.stringify(seq);
+}
+function sbSubscribe(){
+  const ch=SB.channel('depot');
+  TABLES.forEach(t=>ch.on('postgres_changes',{event:'*',schema:'public',table:t},()=>scheduleReload()));
+  ch.on('postgres_changes',{event:'*',schema:'public',table:'kv'},()=>scheduleReload());
+  ch.subscribe();
+}
+function scheduleReload(){
+  clearTimeout(reloadT);
+  reloadT=setTimeout(async()=>{
+    if(pushT||Date.now()-lastPush<700){scheduleReload();return} // local write settling
+    try{await sbLoad();render()}catch(e){}
+  },450);
+}
+async function pushChanges(){
+  pushT=null;
+  if(!READY||!SB) return;
+  try{
+    for(const t of TABLES){
+      const cur={}; DB[t].forEach(o=>{cur[o.id]=M[t].to(o)});
+      const ups=[];
+      for(const id in cur){const j=JSON.stringify(cur[id]); if(SHADOW[t][id]!==j) ups.push(cur[id])}
+      const del=[]; for(const id in SHADOW[t]) if(!(id in cur)) del.push(id);
+      if(ups.length){const {error}=await SB.from(t).upsert(ups); if(error) throw error}
+      if(del.length){const {error}=await SB.from(t).delete().in('id',del); if(error) throw error}
+      SHADOW[t]={}; for(const id in cur) SHADOW[t][id]=JSON.stringify(cur[id]);
+    }
+    const sj=JSON.stringify(DB.settings), qj=JSON.stringify(DB.seq);
+    if(SHADOW._settings!==sj){await SB.from('kv').upsert({k:'settings',v:DB.settings});SHADOW._settings=sj}
+    if(SHADOW._seq!==qj){await SB.from('kv').upsert({k:'seq',v:DB.seq});SHADOW._seq=qj}
+    lastPush=Date.now();
+    if(SYNCERR){SYNCERR=false;render()}
+  }catch(e){SYNCERR=true;toast('Synchronisation échouée — vérifiez la connexion.','bad');render()}
+}
+function load(){ try{const s=sessionStorage.getItem('depot.session');if(s)SESSION=JSON.parse(s)}catch(e){} }
+function save(){ clearTimeout(pushT); pushT=setTimeout(pushChanges,250); }
+function commit(){save();render()}
+function setSession(s){SESSION=s;try{sessionStorage.setItem('depot.session',JSON.stringify(s))}catch(e){}render()}
+function logout(){SESSION=null;try{sessionStorage.removeItem('depot.session')}catch(e){}state.view='';render()}
+const isAdmin=()=>SESSION&&SESSION.role==='admin';
+
+/* ---------- moteur (inchangé) ---------- */
+function compute(moves){
+  const oh=new Map(),held=new Map();
+  for(const m of moves){const it=m.itemId;
+    if(m.type==='restock'||m.type==='adjust')oh.set(it,(oh.get(it)||0)+m.qty);
+    else if(m.type==='writeoff')oh.set(it,(oh.get(it)||0)-m.qty);
+    else if(m.type==='issue'){oh.set(it,(oh.get(it)||0)-m.qty);const k=m.teamId+'|'+it;held.set(k,(held.get(k)||0)+m.qty)}
+    else if(m.type==='return'){oh.set(it,(oh.get(it)||0)+m.qty);const k=m.teamId+'|'+it;held.set(k,(held.get(k)||0)-m.qty)}}
+  return {onHand:oh,held};
+}
+function valid(c){for(const v of c.onHand.values())if(v<-EPS)return false;for(const v of c.held.values())if(v<-EPS)return false;return true}
+function ctx(){const c=compute(DB.moves);
+  const items=new Map(DB.items.map(i=>[i.id,i])),teams=new Map(DB.teams.map(t=>[t.id,t]));
+  const heldItem={};for(const[k,v]of c.held){const it=k.split('|')[1];heldItem[it]=(heldItem[it]||0)+v}
+  return {items,teams,onHand:id=>c.onHand.get(id)||0,held:c.held,heldItem}}
+const onHand=id=>ctx().onHand(id);
+const owned=it=>onHand(it.id)+(ctx().heldItem[it.id]||0);
+const heldOf=tid=>[...ctx().held.entries()].filter(([k,q])=>k.split('|')[0]===tid&&q>EPS).map(([k,q])=>({itemId:k.split('|')[1],qty:q}));
+const heldQty=(tid,iid)=>(heldOf(tid).find(h=>h.itemId===iid)||{}).qty||0;
+function dueFor(tid,iid){const s=DB.moves.filter(m=>m.type==='issue'&&m.teamId===tid&&m.itemId===iid&&m.due).sort((a,b)=>a.due<b.due?-1:1);return s.length?s[0].due:null}
+function overdue(){const o=[];
+  for(const[k,q]of ctx().held){if(q<=EPS)continue;const[t,i]=k.split('|');const d=dueFor(t,i);
+    if(d&&d<today())o.push({teamId:t,itemId:i,qty:q,due:d,late:days(d,today())})}
+  return o.sort((a,b)=>b.late-a.late)}
+function charges(from,to,tf){
+  const C=ctx(),out=[],q={};
+  const sorted=[...DB.moves].sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.ts-b.ts);
+  for(const m of sorted){
+    if(m.type!=='issue'&&m.type!=='return')continue;
+    const it=C.items.get(m.itemId);if(!it||!it.returnable||!it.rate)continue;
+    if(tf&&m.teamId!==tf)continue;
+    const k=m.teamId+'|'+m.itemId;q[k]=q[k]||[];
+    if(m.type==='issue')q[k].push({date:m.date,qty:m.qty});
+    else{let rem=m.qty;while(rem>EPS&&q[k].length){const h=q[k][0],take=Math.min(h.qty,rem);
+      const d=Math.max(0,days(h.date,m.date)-(DB.settings.grace||0));
+      if(d>0)out.push({date:m.date,teamId:m.teamId,itemId:m.itemId,amount:take*d*it.rate,detail:fmtq(take)+' × '+d+' j × '+fmtq(it.rate)});
+      h.qty-=take;rem-=take;if(h.qty<=EPS)q[k].shift()}}}
+  const cut=to&&to<today()?to:today();
+  for(const k in q){const[tid,iid]=k.split('|');if(tf&&tid!==tf)continue;
+    const it=C.items.get(iid);if(!it)continue;
+    for(const l of q[k]){const d=Math.max(0,days(l.date,cut)-(DB.settings.grace||0));
+      if(d>0)out.push({date:cut,teamId:tid,itemId:iid,amount:l.qty*d*it.rate,detail:fmtq(l.qty)+' × '+d+' j × '+fmtq(it.rate),open:true})}}
+  return out.filter(r=>(!from||r.date>=from)&&(!to||r.date<=to));
+}
+const pend=tid=>DB.requests.filter(r=>r.status==='pending'&&(!tid||r.teamId===tid));
+
+/* ---------- ui ---------- */
+function compressImg(file,cb){
+  const rd=new FileReader();
+  rd.onload=()=>{const img=new Image();img.onload=()=>{
+    const max=640;let w=img.width,h=img.height;
+    if(w>h&&w>max){h=Math.round(h*max/w);w=max}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max}
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    try{cb(c.toDataURL('image/jpeg',0.72))}catch(e){cb('')}
+  };img.onerror=()=>cb('');img.src=rd.result};
+  rd.onerror=()=>cb('');rd.readAsDataURL(file);
+}
+let PHOTO_CB=null;
+function pickPhoto(cb){PHOTO_CB=cb;$('#photo-in').click()}
+function thumb(i,cls){return i&&i.photo?'<img class="thumb '+(cls||'')+'" src="'+i.photo+'" alt="">':'<div class="thumb ph '+(cls||'')+'">▦</div>'}
+function toast(m,k){const t=document.createElement('div');t.className='toast'+(k?' '+k:'');t.textContent=m;
+  $('#toasts').appendChild(t);setTimeout(()=>t.remove(),3400)}
+function close(){$('#modal').innerHTML=''}
+function sheet(h){$('#modal').innerHTML='<div class="ov"><div class="sheet"><div class="grab"></div>'+h+'</div></div>'}
+function confirmBox(msg,yes,o){o=o||{};
+  sheet('<h2>'+esc(o.title||'Confirmer')+'</h2><p class="lead">'+esc(msg)+'</p>'+
+  (o.word?'<div class="f"><label>Saisissez '+o.word+' pour confirmer</label><input id="cw" autocomplete="off"></div>':'')+
+  '<div class="acts"><button class="btn" data-a="close">Annuler</button>'+
+  '<button class="btn '+(o.danger?'bad':'go')+'" id="cy">'+esc(o.yes||'Confirmer')+'</button></div>');
+  $('#cy').onclick=()=>{if(o.word&&val('cw').trim().toUpperCase()!==o.word)return toast('Saisissez '+o.word+' exactement.','bad');close();yes()}}
+function toCSV(rows){const s=DB.settings.sep||';';
+  return rows.map(r=>r.map(c=>{c=String(c==null?'':c);return /["\n]/.test(c)||c.includes(s)?'"'+c.replace(/"/g,'""')+'"':c}).join(s)).join('\r\n')}
+function saveFile(n,c,t){const b=new Blob(['\ufeff'+c],{type:t||'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+
+/* =====================================================
+   RENDU
+   ===================================================== */
+const ADMIN=['home','stock','teams','log','reqs'], TEAM=['home','stock','reqs','log'];
+function render(){
+  if(!SESSION)return login();
+  const allowed=isAdmin()?ADMIN:TEAM;
+  if(allowed.indexOf(state.view)<0)state.view='home';
+  const body=isAdmin()
+    ? ({home:aHome,stock:aStock,teams:aTeams,log:aLog,reqs:aReqs}[state.view])()
+    : ({home:tHome,stock:tStock,reqs:tReqs,log:tLog}[state.view])();
+  $('#root').innerHTML='<div class="wrap">'+header()+body+'</div>'+tabs();
+}
+function login(){
+  $('#root').innerHTML='<div class="login"><div class="in">'+
+    '<div class="mark">'+initial(DB.settings.company)+'</div>'+
+    '<h1>'+esc(DB.settings.company||'Dépôt')+'</h1><p>Contrôle du matériel. Choisissez votre espace.</p>'+
+    '<button class="pick" data-a="li-admin"><span class="ic">🔑</span><span><b>Responsable du dépôt</b><span>Valider les sorties et retours, gérer le stock</span></span></button>'+
+    '<button class="pick" data-a="li-team"><span class="ic">👷</span><span><b>Équipe de chantier</b><span>Voir mon matériel, emprunter, rendre</span></span></button>'+
+    (DB.teams.length?'':'<p class="hint">Aucune équipe configurée. Connectez-vous en responsable — code par défaut&nbsp;: 1234.</p>')+
+  '</div></div>';
+}
+function header(){
+  const t=!isAdmin()?ctx().teams.get(SESSION.teamId):null;
+  return '<div class="hdr"><div class="logo">'+initial(DB.settings.company)+'</div>'+
+    '<div class="nm"><b>'+esc(DB.settings.company||'Dépôt')+'</b><span>'+(isAdmin()?'Responsable':esc(t?t.name:'Équipe'))+'</span></div>'+
+    '<button class="iconbtn me" data-a="menu" aria-label="Menu">'+(isAdmin()?'R':initial(t&&t.name))+'</button>'+
+    '<button class="iconbtn" data-a="logout" aria-label="Se déconnecter">⎋</button></div>';
+}
+function tabs(){
+  const def=isAdmin()
+    ?[['home',ICO.home,'Accueil',0],['stock',ICO.box,'Stock',0],['teams',ICO.team,'Équipes',0],['log',ICO.log,'Journal',0],['reqs',ICO.check,'Demandes',pend().length]]
+    :[['home',ICO.home,'Accueil',0],['stock',ICO.box,'Emprunter',0],['reqs',ICO.clock,'Demandes',pend(SESSION.teamId).length],['log',ICO.log,'Historique',0]];
+  return '<div class="tabs"><div class="in">'+def.map(([v,ic,l,c])=>
+    '<button data-v="'+v+'"'+(state.view===v?' class="on"':'')+'>'+ic+'<span>'+l+'</span>'+
+    (c?'<span class="bdg">'+c+'</span>':'')+'</button>').join('')+
+    '<div class="railfoot">'+
+      '<button data-a="menu">'+ICO.gear+'<span>'+(isAdmin()?'Réglages':'Compte')+'</span></button>'+
+      '<button data-a="logout">'+ICO.out+'<span>Quitter</span></button>'+
+    '</div>'+
+  '</div></div>';
+}
+const head=(eyebrow,title)=>'<div class="eyebrow">'+eyebrow+'</div><h1 class="title">'+esc(title)+'</h1>';
+
+/* ---------------- RESPONSABLE ---------------- */
+function aHome(){
+  if(!DB.items.length&&!DB.teams.length){
+    return head('Premier démarrage','Bienvenue')+
+    '<div class="card"><div class="empty"><b>Le dépôt est vide</b>Ajoutez vos articles et vos équipes, ou chargez un exemple pour voir le fonctionnement.</div></div>'+
+    '<button class="cta" data-a="sample">Charger l\u2019exemple</button>'+
+    '<button class="cta sec" data-a="item-new" style="margin-top:-8px">Ajouter un article</button>';
+  }
+  const C=ctx();
+  const teamsA=DB.teams.filter(t=>!t.archived);
+  const holding=teamsA.filter(t=>heldOf(t.id).length).length;
+  const heldLines=[...C.held.entries()].filter(([,q])=>q>EPS);
+  const outQty=heldLines.reduce((s,[,q])=>s+q,0);
+  const outVal=heldLines.reduce((s,[k,q])=>s+q*((C.items.get(k.split('|')[1])||{}).cost||0),0);
+  const totVal=DB.items.reduce((s,i)=>s+owned(i)*(i.cost||0),0);
+  const inVal=totVal-outVal;
+  const low=DB.items.filter(i=>!i.archived&&i.min>0&&onHand(i.id)<i.min).length;
+  const od=overdue(), p=pend();
+  const recent=[...DB.moves].sort((a,b)=>b.ts-a.ts).slice(0,4);
+  const pctIn=totVal>0?Math.round(inVal/totVal*100):100;
+
+  return head(esc(DB.settings.company||'Dépôt'),'Vue du dépôt')+
+  '<div class="cols"><div>'+
+  '<div class="stats">'+
+    '<div class="stat"><div class="l">Équipes actives</div><div class="v num">'+pad2(teamsA.length)+'</div><div class="s">'+holding+' avec du matériel</div></div>'+
+    '<div class="stat'+(low?' ':'')+'"><div class="l">Articles sortis</div><div class="v num">'+fmtq(outQty)+'</div><div class="s'+(low?' warn':'')+'">'+(low?low+' en stock bas':'stock au complet')+'</div></div>'+
+  '</div>'+
+  '<div class="card"><div class="big"><div><div class="l" style="font-size:12.5px;color:var(--muted)">Valeur présente en dépôt</div>'+
+    '<div class="v num">'+money(inVal)+'</div></div><div class="pct">'+pctIn+'%</div></div>'+
+    '<div class="track"><i style="width:'+pctIn+'%"></i></div>'+
+    '<div class="hint">'+money(outVal)+' sont actuellement sur les chantiers.</div></div>'+
+  '<button class="cta" data-a="mv-out">Enregistrer une sortie →</button>'+
+  (p.length?'<div class="sec"><h2>À valider</h2><button class="link" data-v="reqs">Tout voir</button></div>'+
+    p.slice(0,2).map(reqCard).join(''):'')+
+  (od.length?'<div class="sec"><h2>Retards</h2><span class="tag red">'+od.length+'</span></div>'+
+    od.slice(0,3).map(o=>{const t=C.teams.get(o.teamId),i=C.items.get(o.itemId);
+      return '<div class="card flat"><div class="row"><div class="dot out">'+o.late+'j</div>'+
+      '<div class="grow"><div class="ttl">'+esc(i?i.name:'—')+' ×'+fmtq(o.qty)+'</div>'+
+      '<div class="sub">'+esc(t?t.name:'—')+' · à rendre le '+fmtd(o.due)+'</div></div>'+
+      '<button class="btn sm" data-a="team-open" data-id="'+o.teamId+'">Voir</button></div></div>'}).join(''):'')+
+  '</div><div>'+
+  '<div class="sec"><h2>Mouvements récents</h2><button class="link" data-v="log">Tout voir</button></div>'+
+  (recent.length?recent.map(mvRow).join(''):'<div class="card"><div class="empty">Aucun mouvement.</div></div>')+
+  '<div class="sec"><h2>Matériel par équipe</h2><button class="link" data-v="teams">Gérer</button></div>'+
+  '<div class="card">'+(teamsA.length?teamsA.map(t=>{
+    const h=heldOf(t.id), v=h.reduce((s,l)=>s+l.qty*((C.items.get(l.itemId)||{}).cost||0),0);
+    const w=outVal>0?Math.max(3,Math.round(v/outVal*100)):0;
+    const late=h.some(l=>{const d=dueFor(t.id,l.itemId);return d&&d<today()});
+    return '<div style="margin-bottom:14px" data-a="team-open" data-id="'+t.id+'">'+
+      '<div class="row" style="margin-bottom:7px"><div class="grow ttl">'+esc(t.name)+'</div>'+
+      '<div class="ago">'+(h.length?h.length+' article'+(h.length>1?'s':''):'rien')+'</div></div>'+
+      '<div class="track'+(late?' red':'')+'"><i style="width:'+w+'%"></i></div></div>'}).join('')
+    :'<div class="empty">Aucune équipe.</div>')+'</div>'+
+  '</div></div>';
+}
+const pad2=n=>String(n).padStart(2,'0');
+function mvRow(m){
+  const C=ctx(),i=C.items.get(m.itemId),t=C.teams.get(m.teamId),ty=TYPE[m.type];
+  return '<div class="card flat"><div class="row"><div class="dot '+ty[1]+'">'+ty[2]+'</div>'+
+  '<div class="grow"><div class="ttl">'+esc(i?i.name:'—')+' ×'+fmtq(m.qty)+'</div>'+
+  '<div class="sub">'+(t?(m.type==='issue'?'Pris par ':'Rendu par ')+esc(t.name)+(m.site?' · '+esc(m.site):''):esc(m.note||ty[0]))+'</div></div>'+
+  '<div class="ago">'+ago(m.ts)+'</div></div></div>';
+}
+function reqCard(r){
+  const C=ctx(),t=C.teams.get(r.teamId);
+  const bad=r.lines.some(l=>r.type==='issue'?onHand(l.itemId)<l.qty-EPS:heldQty(r.teamId,l.itemId)<l.qty-EPS);
+  return '<div class="card"><div class="row" style="margin-bottom:11px">'+
+    '<div class="dot '+(r.type==='issue'?'out':'in')+'">'+(r.type==='issue'?'OUT':'RET')+'</div>'+
+    '<div class="grow"><div class="ttl">'+esc(t?t.name:'—')+'</div>'+
+    '<div class="sub">'+(r.type==='issue'?'Demande de sortie':'Retour déclaré')+' · '+ago(r.ts)+'</div></div></div>'+
+    r.lines.map(l=>{const i=C.items.get(l.itemId);
+      return '<div class="row" style="padding:5px 0"><div class="grow sub" style="color:var(--text);font-size:13.5px">'+esc(i?i.name:'—')+
+      (l.cond==='damaged'?' <span class="tag amber">endommagé</span>':'')+'</div><div class="ago">×'+fmtq(l.qty)+'</div></div>'}).join('')+
+    (r.due?'<div class="hint">Retour prévu le '+fmtd(r.due)+'</div>':'')+
+    (r.note?'<div class="hint">« '+esc(r.note)+' »</div>':'')+
+    (r.by?'<div class="hint">Demandé par '+esc(r.by)+'</div>':'')+
+    (bad?'<div class="hint" style="color:var(--red)">Quantité supérieure à ce qui est disponible — la validation sera bloquée.</div>':'')+
+    '<div class="pair"><button class="btn go" data-a="req-ok" data-id="'+r.id+'">Valider</button>'+
+    '<button class="btn bad" data-a="req-no" data-id="'+r.id+'">Refuser</button></div></div>';
+}
+function aStock(){
+  const C=ctx(),q=state.q.toLowerCase();
+  const rows=DB.items.filter(i=>!i.archived&&(!q||i.name.toLowerCase().includes(q)||(i.cat||'').toLowerCase().includes(q)))
+    .sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  const totVal=DB.items.reduce((s,i)=>s+owned(i)*(i.cost||0),0);
+  return head(DB.items.filter(i=>!i.archived).length+' articles · '+money(totVal),'Inventaire')+
+  '<input class="search" placeholder="Rechercher un article…" data-q value="'+esc(state.q)+'">'+
+  '<div class="mgrid">'+
+  (rows.length?rows.map(i=>{
+    const oh=onHand(i.id),out=C.heldItem[i.id]||0,low=i.min>0&&oh<i.min;
+    return '<div class="card pcard">'+thumb(i)+'<div class="pin">'+
+      '<div class="ttl">'+esc(i.name)+'</div>'+
+      '<div class="sub">'+esc(i.cat||'Sans catégorie')+' · '+money(i.cost||0)+'</div>'+
+      '<div class="row" style="margin-top:9px"><div class="grow"><div class="n'+(oh<=0?' zero':'')+'" style="font-size:19px'+(low?';color:var(--amber)':'')+'">'+fmtq(oh)+'</div><div class="u">dispo'+(out?' · '+fmtq(out)+' sorti':'')+'</div></div></div>'+
+      '<div class="pair"><button class="btn go" data-a="mv-out" data-id="'+i.id+'"'+(oh<=0?' disabled':'')+'>Sortir</button>'+
+      '<button class="btn" data-a="mv-in" data-id="'+i.id+'"'+(out<=0?' disabled':'')+'>Rendre</button></div>'+
+      '<div class="row" style="margin-top:10px"><button class="link" data-a="item-edit" data-id="'+i.id+'">Modifier</button>'+
+      '<div class="grow"></div><button class="link" data-a="adjust" data-id="'+i.id+'">Réappro.</button></div></div></div>'}).join('')
+  :'<div class="card" style="grid-column:1/-1"><div class="empty"><b>Aucun article</b>'+(state.q?'Rien ne correspond à cette recherche.':'Ajoutez le premier article du dépôt.')+'</div></div>')+'</div>'+
+  '<button class="cta sec" data-a="item-new">Ajouter un article</button>';
+}
+function aTeams(){
+  const C=ctx();
+  const rows=DB.teams.filter(t=>!t.archived).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  return head(rows.length+' compte'+(rows.length>1?'s':''),'Équipes')+
+  '<div class="card"><h2 style="font-size:16px;margin-bottom:14px">Créer un compte équipe</h2>'+
+    '<div class="f"><label>Nom de l\u2019équipe</label><input id="nt-name" placeholder="Équipe Nord"></div>'+
+    '<div class="f2"><div class="f"><label>Chef d\u2019équipe</label><input id="nt-leader" placeholder="Julien Moreau"></div>'+
+    '<div class="f"><label>Code d\u2019accès</label><input id="nt-pin" inputmode="numeric" maxlength="8" value="'+(1000+Math.floor(Math.random()*9000))+'"></div></div>'+
+    '<button class="cta" style="margin:6px 0 0" data-a="team-quick">Créer l\u2019équipe</button>'+
+    '<div class="hint">Donnez le nom et le code au chef d\u2019équipe — il se connecte depuis n\u2019importe quel appareil.</div></div>'+
+  '<div class="sec"><h2>Tous les comptes</h2><button class="link" data-a="xls-open">Télécharger un relevé (Excel / PDF)</button></div>'+
+  '<div class="list">'+(rows.length?rows.map(t=>{
+    const h=heldOf(t.id), v=h.reduce((s,l)=>s+l.qty*((C.items.get(l.itemId)||{}).cost||0),0);
+    const late=h.filter(l=>{const d=dueFor(t.id,l.itemId);return d&&d<today()}).length;
+    return '<div class="card"><div class="row"><div class="dot big mute">'+initial(t.name)+'</div>'+
+      '<div class="grow"><div class="ttl">'+esc(t.name)+'</div>'+
+      '<div class="sub">'+(h.length?h.length+' article'+(h.length>1?'s':'')+' · '+money(v):'rien sorti')+(late?' · ':'')+'</div></div>'+
+      (late?'<span class="tag red">'+late+' en retard</span>':'')+'</div>'+
+      '<div class="pair"><button class="btn" data-a="team-open" data-id="'+t.id+'">Détail</button>'+
+      '<button class="btn" data-a="team-edit" data-id="'+t.id+'">Modifier</button></div>'+'<div class="row" style="margin-top:11px"><button class="link" data-a="xls-open" data-id="'+t.id+'">Télécharger un relevé</button>'+'<div class="grow"></div><button class="link" data-a="xls-open" data-id="'+t.id+'">Excel / PDF · jour ou mois</button></div></div>'}).join('')
+  :'<div class="card"><div class="empty">Aucune équipe pour l\u2019instant.</div></div>')+'</div>';
+}
+function aLog(){
+  const C=ctx();
+  const q=(state.q||'').toLowerCase(), jt=state.jteam||'', jf=state.jfrom||'', jto=state.jto||'';
+  let rows=[...DB.moves];
+  if(state.seg==='out')rows=rows.filter(m=>m.type==='issue');
+  if(state.seg==='in')rows=rows.filter(m=>m.type==='return');
+  if(jt)rows=rows.filter(m=>m.teamId===jt);
+  if(jf)rows=rows.filter(m=>m.date>=jf);
+  if(jto)rows=rows.filter(m=>m.date<=jto);
+  if(q)rows=rows.filter(m=>{const i=C.items.get(m.itemId),t=C.teams.get(m.teamId);
+    return (i&&i.name.toLowerCase().includes(q))||(t&&t.name.toLowerCase().includes(q))||
+      (m.site||'').toLowerCase().includes(q)||(m.slip||'').toLowerCase().includes(q)});
+  rows.sort((a,b)=>b.ts-a.ts);
+  const shown=rows.slice(0,state.limit);
+  const active=jt||jf||jto||q;
+  return head('Tout ce qui entre et sort','Journal')+
+  '<input class="search" placeholder="Rechercher article, équipe, chantier, bon…" data-q value="'+esc(state.q||'')+'">'+
+  '<div class="filters" style="margin-bottom:14px">'+
+    '<select data-jf="jteam"><option value="">Toutes les équipes</option>'+
+      DB.teams.filter(t=>!t.archived).map(t=>'<option value="'+t.id+'"'+(jt===t.id?' selected':'')+'>'+esc(t.name)+'</option>').join('')+'</select>'+
+    '<input type="date" data-jf="jfrom" value="'+jf+'" max="'+today()+'" title="Du"><span class="muted">au</span>'+
+    '<input type="date" data-jf="jto" value="'+jto+'" max="'+today()+'" title="Au">'+
+  '</div>'+
+  '<div class="seg"><button data-s="all"'+(state.seg==='all'?' class="on"':'')+'>Tout</button>'+
+  '<button data-s="out"'+(state.seg==='out'?' class="on"':'')+'>Sorties</button>'+
+  '<button data-s="in"'+(state.seg==='in'?' class="on"':'')+'>Retours</button></div>'+
+  (active?'<div class="sub" style="margin:-6px 0 12px">'+rows.length+' résultat'+(rows.length>1?'s':'')+'</div>':'')+
+  (shown.length?shown.map(m=>{
+    const i=C.items.get(m.itemId),t=C.teams.get(m.teamId),ty=TYPE[m.type];
+    return '<div class="card flat"><div class="row"><div class="dot '+ty[1]+'">'+ty[2]+'</div>'+
+    '<div class="grow"><div class="ttl">'+esc(i?i.name:'—')+' ×'+fmtq(m.qty)+'</div>'+
+    '<div class="sub">'+(t?esc(t.name):esc(m.note||ty[0]))+(m.site?' · '+esc(m.site):'')+' · '+fmtd(m.date)+'</div></div>'+
+    (/^(BS|BR)-/.test(m.slip||'')?'<button class="btn sm" data-a="bon" data-id="'+esc(m.slip)+'">Bon</button>':'')+
+    '</div></div>'}).join('')
+  :'<div class="card"><div class="empty"><b>Rien à afficher</b>'+(active?'Aucun mouvement ne correspond à ces critères.':'Aucun mouvement dans cette catégorie.')+'</div></div>')+
+  (rows.length>shown.length?'<button class="cta sec" data-a="more">Afficher plus ('+(rows.length-shown.length)+')</button>':'')+
+  '<button class="cta sec" data-a="csv-ledger" style="margin-top:6px">Exporter le journal (CSV)</button>';
+}
+function aReqs(){
+  const C=ctx(),p=pend().sort((a,b)=>a.ts-b.ts);
+  const done=DB.requests.filter(r=>r.status!=='pending').sort((a,b)=>b.ts-a.ts).slice(0,10);
+  return head('Déclarations des équipes','Demandes')+
+  (p.length?p.map(reqCard).join('')
+  :'<div class="card"><div class="empty"><b>Rien à traiter</b>Toutes les déclarations des équipes ont été traitées.</div></div>')+
+  (done.length?'<div class="sec"><h2>Traitées</h2></div>'+done.map(r=>{
+    const t=C.teams.get(r.teamId);
+    return '<div class="card flat"><div class="row"><div class="dot '+(r.status==='approved'?'in':'mute')+'">'+(r.status==='approved'?'OK':'NON')+'</div>'+
+    '<div class="grow"><div class="ttl">'+esc(t?t.name:'—')+' · '+(r.type==='issue'?'sortie':'retour')+'</div>'+
+    '<div class="sub">'+r.lines.map(l=>{const i=C.items.get(l.itemId);return esc(i?i.name:'—')+' ×'+fmtq(l.qty)}).join(', ')+
+    (r.decidedNote?' · '+esc(r.decidedNote):'')+'</div></div>'+
+    (r.slip?'<button class="btn sm" data-a="bon" data-id="'+esc(r.slip)+'">Bon</button>':'')+'</div></div>'}).join(''):'');
+}
+
+/* ---------------- ÉQUIPE ---------------- */
+function tHome(){
+  const C=ctx(),t=C.teams.get(SESSION.teamId);
+  if(!t){logout();return ''}
+  const h=heldOf(t.id);
+  const v=h.reduce((s,l)=>s+l.qty*((C.items.get(l.itemId)||{}).cost||0),0);
+  const late=h.filter(l=>{const d=dueFor(t.id,l.itemId);return d&&d<today()});
+  const frais=charges('','',t.id).reduce((s,r)=>s+r.amount,0);
+  const qty=h.reduce((s,l)=>s+l.qty,0);
+  return head(esc(t.name)+(t.site?' · '+esc(t.site):''),'Mon matériel')+
+  '<div class="stats">'+
+    '<div class="stat"><div class="l">Articles détenus</div><div class="v num">'+pad2(h.length)+'</div><div class="s">'+fmtq(qty)+' pièces au total</div></div>'+
+    '<div class="stat'+(late.length?' bad':'')+'"><div class="l">En retard</div><div class="v num">'+pad2(late.length)+'</div><div class="s'+(late.length?' bad':'')+'">'+(late.length?'à rendre au plus vite':'tout est dans les temps')+'</div></div>'+
+  '</div>'+
+  '<div class="card"><div class="big"><div><div style="font-size:12.5px;color:var(--muted)">Valeur sous votre responsabilité</div>'+
+    '<div class="v num">'+money(v)+'</div></div></div>'+
+    (frais>0?'<div class="hint">Frais de location cumulés : '+money(frais)+'.</div>':'<div class="hint">Le matériel reste sous votre responsabilité jusqu\u2019à sa restitution.</div>')+'</div>'+
+  (h.length?'<button class="cta" data-a="mv-in">Déclarer un retour →</button>':'<button class="cta" data-v="stock">Emprunter du matériel →</button>')+
+  (h.length?'<div class="sec"><h2>Détail</h2></div>'+h.map(l=>{
+    const i=C.items.get(l.itemId),d=dueFor(t.id,l.itemId),isLate=d&&d<today();
+    return '<div class="card"><div class="row"><div class="grow">'+
+      '<div class="ttl">'+esc(i?i.name:'—')+'</div>'+
+      '<div class="sub">'+(d?(isLate?'à rendre le '+fmtd(d):'à rendre le '+fmtd(d)):'sans échéance')+'</div></div>'+
+      '<div class="right"><div class="n">'+fmtq(l.qty)+'</div><div class="u">'+esc(i?i.unit:'')+'</div></div></div>'+
+      (isLate?'<div style="margin-top:10px"><span class="tag red">'+days(d,today())+' jours de retard</span></div>':'')+
+      '<div class="pair"><button class="btn go" data-a="mv-in" data-id="'+l.itemId+'">Rendre</button>'+
+      '<button class="btn" data-a="mv-out" data-id="'+l.itemId+'">En reprendre</button></div></div>'}).join('')
+  :'<div class="card"><div class="empty"><b>Rien en votre possession</b>Tout le matériel est rentré au dépôt.</div></div>');
+}
+function tStock(){
+  const C=ctx(),q=state.q.toLowerCase();
+  const rows=DB.items.filter(i=>!i.archived&&(!q||i.name.toLowerCase().includes(q)||(i.cat||'').toLowerCase().includes(q)))
+    .sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  return head('Ce qui est disponible au dépôt','Emprunter')+
+  '<input class="search" placeholder="Rechercher un article…" data-q value="'+esc(state.q)+'">'+
+  '<div class="mgrid">'+
+  (rows.length?rows.map(i=>{
+    const oh=onHand(i.id),mine=heldQty(SESSION.teamId,i.id);
+    return '<div class="card pcard">'+thumb(i)+'<div class="pin"><div class="ttl">'+esc(i.name)+'</div>'+
+      '<div class="sub">'+esc(i.cat||'Sans catégorie')+(mine?' · vous en avez '+fmtq(mine):'')+'</div>'+
+      '<div class="row" style="margin-top:9px"><div class="grow"><div class="n'+(oh<=0?' zero':'')+'" style="font-size:19px">'+fmtq(oh)+'</div><div class="u">dispo</div></div></div>'+
+      '<div class="pair"><button class="btn go" data-a="mv-out" data-id="'+i.id+'"'+(oh<=0?' disabled':'')+'>Demander</button>'+
+      '<button class="btn" data-a="mv-in" data-id="'+i.id+'"'+(mine<=0?' disabled':'')+'>Rendre</button></div></div></div>'}).join('')
+  :'<div class="card" style="grid-column:1/-1"><div class="empty"><b>Aucun article</b>Rien ne correspond à cette recherche.</div></div>')+'</div>';
+}
+function tReqs(){
+  const C=ctx();
+  const mine=DB.requests.filter(r=>r.teamId===SESSION.teamId).sort((a,b)=>b.ts-a.ts).slice(0,25);
+  return head('Suivi de vos déclarations','Mes demandes')+
+  (mine.length?mine.map(r=>{
+    const st=r.status==='pending'?['amber','en attente']:r.status==='approved'?['green','validée']:['red','refusée'];
+    return '<div class="card"><div class="row" style="margin-bottom:9px">'+
+      '<div class="dot '+(r.type==='issue'?'out':'in')+'">'+(r.type==='issue'?'OUT':'RET')+'</div>'+
+      '<div class="grow"><div class="ttl">'+(r.type==='issue'?'Demande de sortie':'Retour déclaré')+'</div>'+
+      '<div class="sub">'+ago(r.ts)+'</div></div><span class="tag '+st[0]+'">'+st[1]+'</span></div>'+
+      r.lines.map(l=>{const i=C.items.get(l.itemId);
+        return '<div class="row" style="padding:4px 0"><div class="grow sub" style="color:var(--text);font-size:13.5px">'+esc(i?i.name:'—')+'</div><div class="ago">×'+fmtq(l.qty)+'</div></div>'}).join('')+
+      (r.decidedNote?'<div class="hint">Réponse du dépôt : '+esc(r.decidedNote)+'</div>':'')+
+      (r.status==='pending'?'<div class="pair"><button class="btn bad" data-a="req-cancel" data-id="'+r.id+'">Annuler</button><span></span></div>':'')+
+      (r.slip?'<div class="pair"><button class="btn" data-a="bon" data-id="'+esc(r.slip)+'">Voir le bon</button><span></span></div>':'')+
+      '</div>'}).join('')
+  :'<div class="card"><div class="empty"><b>Aucune demande</b>Vos demandes de sortie et vos retours apparaîtront ici.</div></div>');
+}
+function tLog(){
+  const C=ctx();
+  const rows=DB.moves.filter(m=>m.teamId===SESSION.teamId).sort((a,b)=>b.ts-a.ts).slice(0,state.limit);
+  return head('Votre équipe','Historique')+
+  (rows.length?rows.map(m=>{const i=C.items.get(m.itemId),ty=TYPE[m.type];
+    return '<div class="card flat"><div class="row"><div class="dot '+ty[1]+'">'+ty[2]+'</div>'+
+    '<div class="grow"><div class="ttl">'+esc(i?i.name:'—')+' ×'+fmtq(m.qty)+'</div>'+
+    '<div class="sub">'+ty[0]+' · '+fmtd(m.date)+'</div></div>'+
+    (/^(BS|BR)-/.test(m.slip||'')?'<button class="btn sm" data-a="bon" data-id="'+esc(m.slip)+'">Bon</button>':'')+'</div></div>'}).join('')
+  :'<div class="card"><div class="empty">Aucun mouvement enregistré.</div></div>');
+}
+
+/* =====================================================
+   FEUILLES
+   ===================================================== */
+function siteOptions(){
+  const set=new Set();
+  DB.teams.forEach(t=>{if(t.site)set.add(t.site)});
+  DB.moves.forEach(m=>{if(m.site)set.add(m.site)});
+  return [...set].sort((a,b)=>a.localeCompare(b,'fr')).map(x=>'<option value="'+esc(x)+'">').join('');
+}
+function defaultSite(teamId){
+  const tid=teamId||(SESSION&&!isAdmin()?SESSION.teamId:null);
+  if(!tid) return '';
+  const last=DB.moves.filter(m=>m.type==='issue'&&m.teamId===tid&&m.site).sort((a,b)=>b.ts-a.ts)[0];
+  if(last) return last.site;
+  const t=ctx().teams.get(tid); return t&&t.site?t.site:'';
+}
+function moveSheet(kind,itemId){ // kind 'issue' | 'return'
+  const C=ctx();
+  const admin=isAdmin();
+  const teamId=admin?null:SESSION.teamId;
+  let pool;
+  if(kind==='issue') pool=DB.items.filter(i=>!i.archived&&onHand(i.id)>EPS);
+  else pool=admin?DB.items.filter(i=>!i.archived&&(C.heldItem[i.id]||0)>EPS):heldOf(teamId).map(h=>C.items.get(h.itemId)).filter(Boolean);
+  if(!pool.length)return toast(kind==='issue'?'Aucun article disponible.':'Aucun matériel à rendre.','bad');
+  if(!DB.teams.filter(t=>!t.archived).length)return toast('Créez d\u2019abord une équipe.','bad');
+  const sel=itemId&&pool.some(i=>i.id===itemId)?itemId:pool[0].id;
+  const teamsList=kind==='return'&&admin
+    ? DB.teams.filter(t=>!t.archived&&heldQty(t.id,sel)>EPS)
+    : DB.teams.filter(t=>!t.archived);
+  const t0=teamsList[0];
+  sheet('<h2>'+(kind==='issue'?(admin?'Enregistrer une sortie':'Demander du matériel'):(admin?'Enregistrer un retour':'Déclarer un retour'))+'</h2>'+
+    '<p class="lead">'+(admin?'Le mouvement est écrit dans le journal et un bon est généré.'
+      :(DB.settings.requireApproval?'Le responsable du dépôt valide votre déclaration.':'Votre déclaration est enregistrée directement.'))+'</p>'+
+    '<div class="f"><label>Date '+(kind==='issue'?'de sortie':'de retour')+' <span style="color:var(--dim);font-weight:400">· modifiable si oubli</span></label><input id="m-date" type="date" value="'+today()+'" max="'+today()+'"></div>'+
+    '<div class="f"><label>Article</label><select id="m-item">'+pool.map(i=>'<option value="'+i.id+'"'+(i.id===sel?' selected':'')+'>'+esc(i.name)+'</option>').join('')+'</select></div>'+
+    (admin?'<div class="f"><label>Équipe</label><select id="m-team">'+(teamsList.length?teamsList.map(t=>'<option value="'+t.id+'">'+esc(t.name)+'</option>').join(''):'<option value="">—</option>')+'</select></div>':'')+
+    '<div class="f2"><div class="f"><label>Quantité</label><input id="m-qty" type="number" step="0.01" min="0" value="1"></div>'+
+    (kind==='issue'?'<div class="f"><label>Retour prévu <span style="color:var(--dim);font-weight:400">· facultatif</span></label><input id="m-due" type="date" value=""><div class="hint">Laissez vide si le matériel n\u2019est pas destiné à revenir (consommable, cédé au chantier).</div></div>'
+      :'<div class="f"><label>État</label><select id="m-cond"><option value="good">Bon état</option><option value="damaged">Endommagé</option></select></div>')+'</div>'+
+    (admin?'':'<div class="f"><label>Votre nom</label><input id="m-by" value="'+esc(lastBy())+'" placeholder="qui fait la demande"></div>')+
+    (kind==='issue'?'<div class="f"><label>Chantier / lieu <span style="color:var(--red);font-weight:400">· obligatoire</span></label><input id="m-site" list="sites-dl" value="'+esc(defaultSite(teamId))+'" placeholder="Bezons, Clichy…"><datalist id="sites-dl">'+siteOptions()+'</datalist></div>':'')+
+    '<div class="f"><label>Note (facultatif)</label><input id="m-note" placeholder="précision…"></div>'+
+    '<div id="m-max" class="hint"></div>'+
+    '<div class="acts"><button class="btn" data-a="close">Annuler</button>'+
+    '<button class="btn go" data-a="mv-save" data-id="'+kind+'">'+(admin?'Enregistrer':'Envoyer')+'</button></div>');
+  const upd=()=>{
+    const iid=val('m-item'), tid=admin?val('m-team'):teamId;
+    const max=kind==='issue'?onHand(iid):(admin?heldQty(tid,iid):heldQty(teamId,iid));
+    const it=C.items.get(iid);
+    $('#m-max').textContent=(kind==='issue'?'Disponible au dépôt : ':'Détenu par l\u2019équipe : ')+fmtq(max)+' '+((it&&it.unit)||'');
+    const q=$('#m-qty'); if(q) q.max=max;
+  };
+  $('#m-item').addEventListener('change',()=>{
+    if(kind==='return'&&admin){
+      const iid=val('m-item');
+      const ts=DB.teams.filter(t=>!t.archived&&heldQty(t.id,iid)>EPS);
+      $('#m-team').innerHTML=ts.length?ts.map(t=>'<option value="'+t.id+'">'+esc(t.name)+'</option>').join(''):'<option value="">—</option>';
+    }
+    upd();
+  });
+  if(admin&&$('#m-team'))$('#m-team').addEventListener('change',upd);
+  upd();
+}
+function lastBy(){const r=DB.requests.filter(x=>x.teamId===(SESSION&&SESSION.teamId)&&x.by).sort((a,b)=>b.ts-a.ts)[0];return r?r.by:''}
+
+function itemSheet(id){
+  const it=id?ctx().items.get(id):null;
+  DRAFT_PHOTO=it?(it.photo||''):'';
+  sheet('<h2>'+(it?'Modifier l\u2019article':'Nouvel article')+'</h2>'+
+  '<div class="f"><label>Photo</label><div id="f-photo-wrap">'+
+    (DRAFT_PHOTO?'<img class="mpick" src="'+DRAFT_PHOTO+'" alt="">':'<div class="mpick ph">▦</div>')+
+    '<button type="button" class="photobtn" data-a="photo-pick">'+(DRAFT_PHOTO?'Changer la photo':'Choisir une photo')+'</button>'+
+    (DRAFT_PHOTO?'<button type="button" class="link" data-a="photo-clear" style="margin-top:8px">Retirer la photo</button>':'')+
+  '</div></div>'+
+  '<div class="f"><label>Nom</label><input id="f-name" value="'+esc(it?it.name:'')+'" placeholder="Meuleuse d\u2019angle"></div>'+
+  '<div class="f2"><div class="f"><label>Catégorie</label><input id="f-cat" value="'+esc(it?it.cat:'')+'" placeholder="Outillage"></div>'+
+  '<div class="f"><label>Unité</label><input id="f-unit" value="'+esc(it?it.unit:'')+'" placeholder="pcs"></div></div>'+
+  '<div class="f2"><div class="f"><label>Valeur unitaire</label><input id="f-cost" type="number" step="0.01" value="'+(it?it.cost:0)+'"></div>'+
+  '<div class="f"><label>Seuil d\u2019alerte</label><input id="f-min" type="number" step="0.01" value="'+(it?it.min:0)+'"></div></div>'+
+  '<div class="f"><label>Emplacement</label><input id="f-loc" value="'+esc(it?it.loc:'')+'" placeholder="Allée 2"></div>'+
+  '<div class="f"><label>Type</label><select id="f-ret"'+(it?' disabled':'')+'>'+
+    '<option value="1"'+(!it||it.returnable?' selected':'')+'>Prêtable — sorti puis rendu</option>'+
+    '<option value="0"'+(it&&!it.returnable?' selected':'')+'>Consommable — utilisé, non rendu</option></select></div>'+
+  '<div class="f" id="rw" style="'+(it&&!it.returnable?'display:none':'')+'"><label>Tarif journalier (0 si pas de refacturation)</label><input id="f-rate" type="number" step="0.01" value="'+(it?it.rate:0)+'"></div>'+
+  (it?'':'<div class="f"><label>Stock initial</label><input id="f-qty" type="number" step="0.01" value="0"></div>')+
+  '<div class="acts">'+(it?'<button class="btn bad" data-a="item-del" data-id="'+id+'">Supprimer</button>':'<button class="btn" data-a="close">Annuler</button>')+
+  '<button class="btn go" data-a="item-save" data-id="'+(id||'')+'">Enregistrer</button></div>');
+  $('#f-ret').addEventListener('change',e=>{$('#rw').style.display=e.target.value==='1'?'':'none'});
+}
+function redrawPhoto(){
+  const w=$('#f-photo-wrap'); if(!w) return;
+  w.innerHTML=(DRAFT_PHOTO?'<img class="mpick" src="'+DRAFT_PHOTO+'" alt="">':'<div class="mpick ph">▦</div>')+
+    '<button type="button" class="photobtn" data-a="photo-pick">'+(DRAFT_PHOTO?'Changer la photo':'Choisir une photo')+'</button>'+
+    (DRAFT_PHOTO?'<button type="button" class="link" data-a="photo-clear" style="margin-top:8px">Retirer la photo</button>':'');
+}
+function adjustSheet(id){
+  const opts=DB.items.filter(i=>!i.archived);
+  if(!opts.length)return toast('Créez d\u2019abord un article.','bad');
+  sheet('<h2>Réapprovisionner / ajuster</h2><p class="lead">Entrées de stock, corrections d\u2019inventaire et mises au rebut.</p>'+
+  '<div class="f"><label>Article</label><select id="a-item">'+opts.map(i=>'<option value="'+i.id+'"'+(i.id===id?' selected':'')+'>'+esc(i.name)+' ('+fmtq(onHand(i.id))+' en dépôt)</option>').join('')+'</select></div>'+
+  '<div class="f"><label>Mouvement</label><select id="a-type"><option value="restock">Réapprovisionnement (ajout)</option>'+
+  '<option value="adjust">Ajustement d\u2019inventaire (±)</option><option value="writeoff">Mise au rebut (retrait)</option></select></div>'+
+  '<div class="f2"><div class="f"><label>Quantité</label><input id="a-qty" type="number" step="0.01" placeholder="10"></div>'+
+  '<div class="f"><label>Date</label><input id="a-date" type="date" value="'+today()+'"></div></div>'+
+  '<div class="f"><label>Nouvelle valeur unitaire (facultatif)</label><input id="a-cost" type="number" step="0.01" placeholder="inchangée"></div>'+
+  '<div class="f"><label>Note</label><input id="a-note" placeholder="bon de livraison, motif…"></div>'+
+  '<div class="acts"><button class="btn" data-a="close">Annuler</button><button class="btn go" data-a="adjust-save">Enregistrer</button></div>');
+}
+function teamSheet(id){
+  const t=id?ctx().teams.get(id):null;
+  sheet('<h2>'+(t?'Modifier l\u2019équipe':'Nouvelle équipe')+'</h2>'+
+  '<div class="f"><label>Nom de l\u2019équipe</label><input id="t-name" value="'+esc(t?t.name:'')+'"></div>'+
+  '<div class="f2"><div class="f"><label>Chef d\u2019équipe</label><input id="t-leader" value="'+esc(t?t.leader:'')+'"></div>'+
+  '<div class="f"><label>Téléphone</label><input id="t-phone" value="'+esc(t?t.phone:'')+'"></div></div>'+
+  '<div class="f2"><div class="f"><label>Chantier</label><input id="t-site" value="'+esc(t?t.site:'')+'"></div>'+
+  '<div class="f"><label>Code d\u2019accès</label><input id="t-pin" inputmode="numeric" maxlength="8" value="'+esc(t?t.pin:String(1000+Math.floor(Math.random()*9000)))+'"></div></div>'+
+  '<div class="acts">'+(t?'<button class="btn bad" data-a="team-del" data-id="'+id+'">Supprimer</button>':'<button class="btn" data-a="close">Annuler</button>')+
+  '<button class="btn go" data-a="team-save" data-id="'+(id||'')+'">Enregistrer</button></div>');
+}
+function teamDetail(id){
+  const C=ctx(),t=C.teams.get(id);if(!t)return close();
+  const h=heldOf(id), v=h.reduce((s,l)=>s+l.qty*((C.items.get(l.itemId)||{}).cost||0),0);
+  const frais=charges('','',id).reduce((s,r)=>s+r.amount,0);
+  sheet('<h2>'+esc(t.name)+'</h2><p class="lead">'+[t.leader,t.phone,t.site].filter(Boolean).map(esc).join(' · ')+' · code '+esc(t.pin||'—')+'</p>'+
+  '<div class="stats"><div class="stat"><div class="l">Valeur sortie</div><div class="v num" style="font-size:24px">'+money(v)+'</div></div>'+
+  '<div class="stat"><div class="l">Frais cumulés</div><div class="v num" style="font-size:24px">'+money(frais)+'</div></div></div>'+
+  (h.length?h.map(l=>{const i=C.items.get(l.itemId),d=dueFor(id,l.itemId),late=d&&d<today();
+    return '<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)"><div class="grow">'+
+    '<div class="ttl">'+esc(i?i.name:'—')+'</div><div class="sub">'+(d?'à rendre le '+fmtd(d):'sans échéance')+'</div></div>'+
+    (late?'<span class="tag red">'+days(d,today())+' j</span>':'')+
+    '<div class="right"><div class="n">'+fmtq(l.qty)+'</div></div></div>'}).join('')
+  :'<div class="empty">Tout est rentré.</div>')+
+  '<div class="acts"><button class="btn" data-a="team-newcode" data-id="'+id+'">Nouveau code</button>'+
+  '<button class="btn" data-a="xls-open" data-id="'+id+'">Télécharger un relevé</button>'+
+  '<button class="btn go" data-a="mv-out">Nouvelle sortie</button></div>');
+}
+function menuSheet(){
+  sheet('<h2>'+(isAdmin()?'Responsable':'Mon compte')+'</h2><p class="lead">'+esc(DB.settings.company)+'</p>'+
+  (isAdmin()
+   ?'<div class="f"><label>Nom du dépôt</label><input id="st-company" value="'+esc(DB.settings.company)+'"></div>'+
+    '<div class="f2"><div class="f"><label>Devise</label><input id="st-cur" value="'+esc(DB.settings.currency)+'"></div>'+
+    '<div class="f"><label>Code responsable</label><input id="st-pin" inputmode="numeric" maxlength="8" value="'+esc(DB.settings.adminPin)+'"></div></div>'+
+    '<div class="f2"><div class="f"><label>Jours de franchise</label><input id="st-grace" type="number" value="'+DB.settings.grace+'"></div>'+
+    '<div class="f"><label>Séparateur CSV</label><select id="st-sep"><option value=";"'+(DB.settings.sep===';'?' selected':'')+'>; (Excel FR)</option><option value=","'+(DB.settings.sep===','?' selected':'')+'>,</option></select></div></div>'+
+    '<div class="f"><label>Déclarations des équipes</label><select id="st-appr">'+
+      '<option value="1"'+(DB.settings.requireApproval?' selected':'')+'>À valider par le responsable</option>'+
+      '<option value="0"'+(!DB.settings.requireApproval?' selected':'')+'>Appliquées directement</option></select></div>'+
+    '<button class="cta" style="margin:4px 0 16px" data-a="set-save">Enregistrer</button>'+
+    '<div class="pair"><button class="btn go" data-a="xls-open">Télécharger un relevé</button><button class="btn" data-a="csv-inv">Export inventaire</button></div>'+'<div class="pair"><button class="btn" data-a="csv-backup">Sauvegarde</button><button class="btn" data-a="csv-ledger">Export journal</button></div>'+
+    '<div class="pair"><button class="btn" data-a="restore">Restaurer</button><button class="btn" data-a="theme">Clair / sombre</button></div>'+
+    '<div class="pair"><button class="btn bad" data-a="erase">Tout effacer</button><span></span></div>'
+   :'<div class="pair"><button class="btn" data-a="theme">Clair / sombre</button><button class="btn" data-a="logout">Se déconnecter</button></div>'));
+}
+function bon(slip){
+  const C=ctx(),ms=DB.moves.filter(m=>m.slip===slip);
+  if(!ms.length)return toast('Bon introuvable.','bad');
+  const t=C.teams.get(ms[0].teamId), isOut=ms[0].type==='issue';
+  const tot=ms.reduce((s,m)=>s+m.qty*(m.unitCost||0),0);
+  const h='<div class="bon"><div class="bh"><div><b style="font-size:15px">'+esc(DB.settings.company||'Dépôt')+'</b>'+
+    '<div style="color:var(--muted);font-size:12px">'+(isOut?'Bon de sortie de matériel':'Bon de retour de matériel')+'</div></div>'+
+    '<div style="text-align:right"><b>'+esc(slip)+'</b><div style="color:var(--muted);font-size:12px">'+fmtd(ms[0].date)+'</div></div></div>'+
+    '<div class="meta"><div><span>Équipe</span>'+esc(t?t.name:'—')+'</div><div><span>Chef d\u2019équipe</span>'+esc((t&&t.leader)||'—')+'</div>'+
+    '<div><span>Chantier</span>'+esc((isOut&&ms[0].site)||(t&&t.site)||'—')+'</div>'+(isOut&&ms[0].due?'<div><span>Retour prévu</span>'+fmtd(ms[0].due)+'</div>':'')+'</div>'+
+    '<table><thead><tr><th>Article</th><th style="text-align:right">Qté</th><th style="text-align:right">Valeur</th></tr></thead><tbody>'+
+    ms.map(m=>{const i=C.items.get(m.itemId);
+      return '<tr><td>'+esc(i?i.name:'—')+(m.note?'<br><span style="color:var(--muted);font-size:11.5px">'+esc(m.note)+'</span>':'')+'</td>'+
+      '<td style="text-align:right">'+fmtq(m.qty)+' '+esc(i?i.unit:'')+'</td><td style="text-align:right">'+money(m.qty*(m.unitCost||0))+'</td></tr>'}).join('')+
+    '</tbody></table><div class="row" style="margin-top:12px"><div class="grow" style="font-weight:600">Valeur totale engagée</div><b>'+money(tot)+'</b></div>'+
+    '<div class="hint">Le matériel reste sous la responsabilité de l\u2019équipe jusqu\u2019à sa restitution au dépôt.</div>'+
+    '<div class="sig"><div>Le magasinier — nom et signature</div><div>Le chef d\u2019équipe — nom et signature</div></div></div>';
+  $('#print').innerHTML=h;
+  sheet(h+'<div class="acts"><button class="btn" data-a="close">Fermer</button>'+
+    '<button class="btn" data-a="bon-pdf" data-id="'+esc(slip)+'">PDF</button>'+
+    '<button class="btn go" data-a="print">Imprimer</button></div>');
+}
+function bonPDF(slip){
+  if(!(window.jspdf&&window.jspdf.jsPDF))return toast('Générateur PDF indisponible.','bad');
+  const C=ctx(),ms=DB.moves.filter(m=>m.slip===slip);
+  if(!ms.length)return toast('Bon introuvable.','bad');
+  const t=C.teams.get(ms[0].teamId), isOut=ms[0].type==='issue';
+  const tot=ms.reduce((s,m)=>s+m.qty*(m.unitCost||0),0);
+  const cur=DB.settings.currency||'€';
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'});
+  const L=18, R=192; let y=20;
+  doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text(DB.settings.company||'Dépôt',L,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(110);
+  doc.text((isOut?'Bon de sortie de matériel':'Bon de retour de matériel'),L,y+6);
+  doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(12);
+  doc.text(slip,R,y,{align:'right'});doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(110);
+  doc.text(fmtd(ms[0].date),R,y+6,{align:'right'});doc.setTextColor(20);
+  y+=18;
+  const meta=[['Équipe',t?t.name:'—'],['Chef d\u2019équipe',(t&&t.leader)||'—'],
+    ['Chantier',(isOut&&ms[0].site)||(t&&t.site)||'—']];
+  if(isOut&&ms[0].due)meta.push(['Retour prévu',fmtd(ms[0].due)]);
+  doc.setFontSize(10);
+  meta.forEach((m,i)=>{const cx=i%2?110:L, cy=y+Math.floor(i/2)*7;
+    doc.setTextColor(130);doc.text(m[0],cx,cy);doc.setTextColor(20);doc.text(String(m[1]),cx+30,cy)});
+  y+=Math.ceil(meta.length/2)*7+6;
+  doc.setDrawColor(210);doc.line(L,y,R,y);y+=6;
+  doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(130);
+  doc.text('ARTICLE',L,y);doc.text('QTÉ',150,y,{align:'right'});doc.text('VALEUR',R,y,{align:'right'});
+  doc.setTextColor(20);doc.setFont('helvetica','normal');doc.setFontSize(10);y+=5;
+  ms.forEach(m=>{const i=C.items.get(m.itemId);doc.line(L,y-1,R,y-1);y+=4;
+    doc.text(String((i&&i.name)||'—'),L,y);
+    doc.text(fmtq(m.qty)+' '+((i&&i.unit)||''),150,y,{align:'right'});
+    doc.text(fmtq(Math.round(m.qty*(m.unitCost||0)*100)/100)+' '+cur,R,y,{align:'right'});
+    if(m.note){y+=4;doc.setTextColor(130);doc.setFontSize(8.5);doc.text(String(m.note),L,y);doc.setFontSize(10);doc.setTextColor(20)}
+    y+=4});
+  doc.line(L,y-1,R,y-1);y+=6;
+  doc.setFont('helvetica','bold');doc.text('Valeur totale engagée',L,y);
+  doc.text(fmtq(Math.round(tot*100)/100)+' '+cur,R,y,{align:'right'});doc.setFont('helvetica','normal');
+  y+=12;doc.setFontSize(8.5);doc.setTextColor(130);
+  doc.text('Le matériel reste sous la responsabilité de l\u2019équipe jusqu\u2019à sa restitution au dépôt.',L,y);
+  doc.setTextColor(20);y+=20;
+  doc.setDrawColor(180);doc.line(L,y,L+70,y);doc.line(110,y,110+70,y);y+=5;
+  doc.setFontSize(9);doc.setTextColor(110);
+  doc.text('Le magasinier — nom et signature',L,y);doc.text('Le chef d\u2019équipe — nom et signature',110,y);
+  doc.save('bon-'+slip+'.pdf');
+}
+
+/* ===== .xlsx natif (zip STORE + OOXML), sans dépendance ===== */
+const ENC=new TextEncoder();
+const CRCT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;
+  for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRCT[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function zipStore(files){
+  const u16=n=>[n&255,(n>>8)&255], u32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255];
+  const dt=new Date();
+  const tm=((dt.getHours()<<11)|(dt.getMinutes()<<5)|Math.floor(dt.getSeconds()/2))&0xFFFF;
+  const dd=(((dt.getFullYear()-1980)<<9)|((dt.getMonth()+1)<<5)|dt.getDate())&0xFFFF;
+  const parts=[],cent=[];let off=0;
+  for(const f of files){
+    const nm=ENC.encode(f.name),c=crc32(f.data),n=f.data.length;
+    const loc=new Uint8Array([...u32(0x04034b50),...u16(20),...u16(0),...u16(0),...u16(tm),...u16(dd),
+      ...u32(c),...u32(n),...u32(n),...u16(nm.length),...u16(0)]);
+    parts.push(loc,nm,f.data);
+    cent.push(new Uint8Array([...u32(0x02014b50),...u16(20),...u16(20),...u16(0),...u16(0),...u16(tm),...u16(dd),
+      ...u32(c),...u32(n),...u32(n),...u16(nm.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(off),...nm]));
+    off+=loc.length+nm.length+n;
+  }
+  let cdLen=0;cent.forEach(c=>cdLen+=c.length);
+  const eocd=new Uint8Array([...u32(0x06054b50),...u16(0),...u16(0),...u16(cent.length),...u16(cent.length),
+    ...u32(cdLen),...u32(off),...u16(0)]);
+  let tot=0;parts.forEach(p=>tot+=p.length);tot+=cdLen+eocd.length;
+  const out=new Uint8Array(tot);let p=0;
+  parts.forEach(x=>{out.set(x,p);p+=x.length});
+  cent.forEach(x=>{out.set(x,p);p+=x.length});
+  out.set(eocd,p);
+  return out;
+}
+const xe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const colN=n=>{let s='';n++;while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=(n-1-m)/26}return s};
+const XT=(v,s)=>({v,s}), XN=(v,s)=>({v,n:true,s});
+function sheetXml(rows,cols){
+  let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
+  if(cols&&cols.length)x+='<cols>'+cols.map((w,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>').join('')+'</cols>';
+  x+='<sheetData>';
+  rows.forEach((r,ri)=>{
+    x+='<row r="'+(ri+1)+'">';
+    (r||[]).forEach((c,ci)=>{
+      if(c==null||c.v==null||c.v==='')return;
+      const ref=colN(ci)+(ri+1), st=c.s?' s="'+c.s+'"':'';
+      if(c.n)x+='<c r="'+ref+'"'+st+'><v>'+(isFinite(c.v)?Math.round(c.v*1e6)/1e6:0)+'</v></c>';
+      else x+='<c r="'+ref+'"'+st+' t="inlineStr"><is><t xml:space="preserve">'+xe(c.v)+'</t></is></c>';
+    });
+    x+='</row>';
+  });
+  return x+'</sheetData></worksheet>';
+}
+function stylesXml(){
+  const cur=xe(DB.settings.currency||'€');
+  const NS='xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"';
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet '+NS+'>'+
+  '<numFmts count="2"><numFmt numFmtId="164" formatCode="#,##0.00\\ &quot;'+cur+'&quot;"/>'+
+  '<numFmt numFmtId="165" formatCode="#,##0.###"/></numFmts>'+
+  '<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font>'+
+  '<font><b/><sz val="11"/><name val="Calibri"/></font>'+
+  '<font><b/><sz val="14"/><name val="Calibri"/></font></fonts>'+
+  '<fills count="3"><fill><patternFill patternType="none"/></fill>'+
+  '<fill><patternFill patternType="gray125"/></fill>'+
+  '<fill><patternFill patternType="solid"><fgColor rgb="FFEDEDED"/><bgColor indexed="64"/></patternFill></fill></fills>'+
+  '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'+
+  '<border><left/><right/><top/><bottom style="thin"><color rgb="FFB7B7B7"/></bottom><diagonal/></border></borders>'+
+  '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+  '<cellXfs count="7">'+
+  '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'+
+  '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>'+
+  '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+  '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'+
+  '<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'+
+  '<xf numFmtId="164" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/>'+
+  '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'+
+  '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+}
+function xlsxBuild(sheets){
+  const F=[],add=(n,s)=>F.push({name:n,data:ENC.encode(s)});
+  const used={};
+  const names=sheets.map((s,i)=>{
+    let n=(s.name||('Feuille'+(i+1))).replace(/[\\\/\?\*\[\]:]/g,' ').trim().slice(0,28)||('Feuille'+(i+1));
+    let b=n,k=2;while(used[n.toLowerCase()]){n=(b+' '+k).slice(0,31);k++}
+    used[n.toLowerCase()]=1;return n;
+  });
+  const R='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  add('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+    '<Default Extension="xml" ContentType="application/xml"/>'+
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+
+    sheets.map((s,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('')+
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
+  add('_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="'+R+'/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+  add('xl/workbook.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="'+R+'"><sheets>'+
+    names.map((n,i)=>'<sheet name="'+xe(n)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join('')+
+    '</sheets></workbook>');
+  add('xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    sheets.map((s,i)=>'<Relationship Id="rId'+(i+1)+'" Type="'+R+'/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join('')+
+    '<Relationship Id="rId'+(sheets.length+1)+'" Type="'+R+'/styles" Target="styles.xml"/></Relationships>');
+  sheets.forEach((s,i)=>add('xl/worksheets/sheet'+(i+1)+'.xml',sheetXml(s.rows,s.cols)));
+  add('xl/styles.xml',stylesXml());
+  return zipStore(F);
+}
+function saveBin(name,data,mime){
+  const b=new Blob([data],{type:mime||'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+const slug=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'equipe';
+function monthLabel(ym){const [y,m]=ym.split('-').map(Number);
+  return new Date(y,m-1,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}
+function heldAsOf(teamId,end){
+  const c=compute(DB.moves.filter(x=>x.date<=end)),out=[];
+  for(const [k,q] of c.held){const p=k.split('|');if(p[0]===teamId&&q>EPS)out.push({itemId:p[1],qty:q})}
+  return out;
+}
+/* ---- feuille d'une équipe ---- */
+function teamMonthRows(teamId,from,to,plabel){
+  const C=ctx(),t=C.teams.get(teamId),rows=[];
+  rows.push([XT(DB.settings.company||'Dépôt',1)]);
+  rows.push([XT('Relevé du matériel',6)]);
+  rows.push([]);
+  rows.push([XT('Équipe',6),XT(t.name)]);
+  rows.push([XT('Chef d\u2019équipe',6),XT(t.leader||'—')]);
+  rows.push([XT('Chantier',6),XT(t.site||'—')]);
+  rows.push([XT('Période',6),XT(plabel+'  ('+fmtd(from)+(from!==to?' au '+fmtd(to):'')+')')]);
+  rows.push([XT('Édité le',6),XT(fmtd(today()))]);
+  rows.push([]);
+
+  const HDR=['Date','Bon','Article','Catégorie','Chantier','Quantité','Unité','Valeur unitaire','Valeur totale','Retour prévu'];
+  const outs=DB.moves.filter(m=>m.teamId===teamId&&m.type==='issue'&&m.date>=from&&m.date<=to)
+    .sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.ts-b.ts);
+  rows.push([XT('MATÉRIEL PRIS DANS LE MOIS',6)]);
+  const HDR2=['Date','Bon','Article','Catégorie','Quantité','Unité','Valeur unitaire','Valeur totale','Retour prévu'];
+  const bySite={};
+  outs.forEach(m=>{const s=(m.site||'').trim()||'(sans chantier)';(bySite[s]=bySite[s]||[]).push(m)});
+  let tO=0,qO=0;
+  if(!outs.length){ rows.push([XT('Aucune sortie sur la période')]); }
+  else{
+    Object.keys(bySite).sort((a,b)=>a.localeCompare(b,'fr')).forEach(site=>{
+      rows.push([XT('Chantier : '+site,6)]);
+      rows.push(HDR2.map(h=>XT(h,2)));
+      let st=0,sq=0;
+      bySite[site].forEach(m=>{const i=C.items.get(m.itemId)||{},v=m.qty*(m.unitCost||0);st+=v;sq+=m.qty;tO+=v;qO+=m.qty;
+        rows.push([XT(fmtd(m.date)),XT(m.slip||''),XT(i.name||'—'),XT(i.cat||''),XN(m.qty,4),XT(i.unit||''),
+          XN(m.unitCost||0,3),XN(v,3),XT(m.due?fmtd(m.due):'')])});
+      rows.push([XT('Sous-total — '+site,6),null,null,null,XN(sq,4),null,null,XN(st,5)]);
+      rows.push([]);
+    });
+    rows.push([XT('TOTAL PRIS DANS LE MOIS',6),null,null,null,XN(qO,4),null,null,XN(tO,5)]);
+  }
+  rows.push([]);
+
+  const rets=DB.moves.filter(m=>m.teamId===teamId&&m.type==='return'&&m.date>=from&&m.date<=to)
+    .sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.ts-b.ts);
+  rows.push([XT('MATÉRIEL RENDU DANS LE MOIS',6)]);
+  rows.push(['Date','Bon','Article','Catégorie','Quantité','Unité','Valeur unitaire','Valeur totale','État'].map(h=>XT(h,2)));
+  let tR=0,qR=0;
+  rets.forEach(m=>{const i=C.items.get(m.itemId)||{},v=m.qty*(m.unitCost||0);tR+=v;qR+=m.qty;
+    rows.push([XT(fmtd(m.date)),XT(m.slip||''),XT(i.name||'—'),XT(i.cat||''),XN(m.qty,4),XT(i.unit||''),
+      XN(m.unitCost||0,3),XN(v,3),XT(/endommag/i.test(m.note||'')?'Endommagé':'Bon état')])});
+  if(!rets.length)rows.push([XT('Aucun retour sur la période')]);
+  else rows.push([XT('Total',6),null,null,null,XN(qR,4),null,null,XN(tR,5)]);
+  rows.push([]);
+
+  const still=heldAsOf(teamId,to);
+  rows.push([XT('ENCORE EN POSSESSION AU '+fmtd(to),6)]);
+  rows.push(['Article','Catégorie','Quantité','Unité','Valeur unitaire','Valeur engagée','Retour prévu','Retard (jours)'].map(h=>XT(h,2)));
+  let tS=0;
+  still.forEach(l=>{const i=C.items.get(l.itemId)||{},v=l.qty*(i.cost||0);tS+=v;
+    const d=dueFor(teamId,l.itemId),late=d&&d<to?days(d,to):0;
+    rows.push([XT(i.name||'—'),XT(i.cat||''),XN(l.qty,4),XT(i.unit||''),XN(i.cost||0,3),XN(v,3),
+      XT(d?fmtd(d):'—'),late?XN(late,4):XT('')])});
+  if(!still.length)rows.push([XT('Tout est rentré au dépôt')]);
+  else rows.push([XT('Total',6),null,null,null,null,XN(tS,5)]);
+
+  const fr=charges(from,to,teamId);
+  if(fr.length){
+    rows.push([]);
+    rows.push([XT('FRAIS DE LOCATION DU MOIS',6)]);
+    rows.push(['Date','Article','Calcul','Montant'].map(h=>XT(h,2)));
+    let tF=0;
+    fr.sort((a,b)=>a.date<b.date?-1:1).forEach(r=>{const i=C.items.get(r.itemId)||{};tF+=r.amount;
+      rows.push([XT(fmtd(r.date)+(r.open?' (en cours)':'')),XT(i.name||'—'),XT(r.detail),XN(r.amount,3)])});
+    rows.push([XT('Total',6),null,null,XN(tF,5)]);
+  }
+  return rows;
+}
+/* ---- feuille de synthèse ---- */
+function synthRows(teams,from,to,plabel){
+  const C=ctx(),rows=[];
+  rows.push([XT(DB.settings.company||'Dépôt',1)]);
+  rows.push([XT('Synthèse par équipe — '+plabel,6)]);
+  rows.push([XT('Période',6),XT(fmtd(from)+(from!==to?' au '+fmtd(to):''))]);
+  rows.push([]);
+  rows.push(['Équipe','Chef d\u2019équipe','Chantier','Sorties (lignes)','Valeur prise','Retours (lignes)',
+    'Valeur rendue','Encore détenu','Frais de location'].map(h=>XT(h,2)));
+  let a=0,b=0,c=0,f=0;
+  teams.forEach(t=>{
+    const outs=DB.moves.filter(m=>m.teamId===t.id&&m.type==='issue'&&m.date>=from&&m.date<=to);
+    const rets=DB.moves.filter(m=>m.teamId===t.id&&m.type==='return'&&m.date>=from&&m.date<=to);
+    const vo=outs.reduce((s,m)=>s+m.qty*(m.unitCost||0),0);
+    const vr=rets.reduce((s,m)=>s+m.qty*(m.unitCost||0),0);
+    const vs=heldAsOf(t.id,to).reduce((s,l)=>s+l.qty*((C.items.get(l.itemId)||{}).cost||0),0);
+    const vf=charges(from,to,t.id).reduce((s,r)=>s+r.amount,0);
+    a+=vo;b+=vr;c+=vs;f+=vf;
+    rows.push([XT(t.name),XT(t.leader||''),XT(t.site||''),XN(outs.length,4),XN(vo,3),
+      XN(rets.length,4),XN(vr,3),XN(vs,3),XN(vf,3)]);
+  });
+  rows.push([XT('Total',6),null,null,null,XN(a,5),null,XN(b,5),XN(c,5),XN(f,5)]);
+  return rows;
+}
+const COLS_T=[13,12,30,18,16,11,9,15,15,14];
+const COLS_S=[24,20,22,15,15,15,15,15,15];
+let XP={mode:'month',team:''};
+function exportSheet(teamId){
+  const ts=DB.teams.filter(t=>!t.archived);
+  if(!ts.length)return toast('Aucune équipe.','bad');
+  if(teamId!=null&&teamId!=='')XP.team=teamId;
+  const tid=XP.team||'';
+  sheet('<h2>Télécharger un relevé</h2><p class="lead">Ce que chaque équipe a pris, rendu et garde encore.</p>'+
+    '<div class="seg"><button data-a="xp-month" class="'+(XP.mode==='month'?'on':'')+'">Par mois</button>'+
+      '<button data-a="xp-day" class="'+(XP.mode==='day'?'on':'')+'">Par jour</button></div>'+
+    (XP.mode==='month'
+      ? '<div class="f"><label>Mois</label><input id="x-month" type="month" value="'+(XP.month||today().slice(0,7))+'" max="'+today().slice(0,7)+'"></div>'
+      : '<div class="f"><label>Jour</label><input id="x-day" type="date" value="'+(XP.day||today())+'" max="'+today()+'"></div>')+
+    '<div class="f"><label>Équipe</label><select id="x-team"><option value="">Toutes les équipes</option>'+
+      ts.map(t=>'<option value="'+t.id+'"'+(String(tid)===String(t.id)?' selected':'')+'>'+esc(t.name)+'</option>').join('')+'</select></div>'+
+    '<div class="hint">Excel : tableur détaillé, calculs modifiables. PDF : document prêt à imprimer ou envoyer.</div>'+
+    '<div class="acts"><button class="btn" data-a="close">Annuler</button>'+
+      '<button class="btn" data-a="xp-xlsx">Excel</button>'+
+      '<button class="btn go" data-a="xp-pdf">PDF</button></div>');
+}
+function readExportPeriod(){
+  const tid=val('x-team')||'';
+  if(XP.mode==='month'){const ym=val('x-month')||today().slice(0,7);const p=ym.split('-').map(Number);
+    return {from:ym+'-01',to:ymd(new Date(p[0],p[1],0)),tid,plabel:monthLabel(ym),fname:ym};}
+  const dd=val('x-day')||today();
+  return {from:dd,to:dd,tid,plabel:fmtd(dd),fname:dd};
+}
+function doExport(from,to,tid,plabel,fname){
+  const ts=tid?[ctx().teams.get(tid)].filter(Boolean):DB.teams.filter(t=>!t.archived);
+  if(!ts.length)return toast('Aucune équipe.','bad');
+  const sheets=[];
+  if(!tid)sheets.push({name:'Synthèse',rows:synthRows(ts,from,to,plabel),cols:COLS_S});
+  ts.forEach(t=>sheets.push({name:t.name,rows:teamMonthRows(t.id,from,to,plabel),cols:COLS_T}));
+  saveBin('releve-'+(tid?slug(ts[0].name):'toutes-equipes')+'-'+fname+'.xlsx',xlsxBuild(sheets));
+  toast('Relevé Excel téléchargé.','ok');
+}
+function doExportPDF(from,to,tid,plabel,fname){
+  if(!(window.jspdf&&window.jspdf.jsPDF))return toast('Générateur PDF indisponible.','bad');
+  const C=ctx();
+  const ts=tid?[C.teams.get(tid)].filter(Boolean):DB.teams.filter(t=>!t.archived);
+  if(!ts.length)return toast('Aucune équipe.','bad');
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'});
+  const L=15,R=195,BOT=282; let y=18; const cur=DB.settings.currency||'€';
+  const need=h=>{if(y+h>BOT){doc.addPage();y=18}};
+  const line=()=>{doc.setDrawColor(218);doc.line(L,y,R,y)};
+  const money2=v=>fmtq(Math.round(v*100)/100)+' '+cur;
+  ts.forEach((team,idx)=>{
+    if(idx>0)doc.addPage(); y=18;
+    doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(14);
+    doc.text(DB.settings.company||'Dépôt',L,y);
+    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(110);
+    doc.text('Relevé — '+plabel,R,y,{align:'right'});
+    y+=7;doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text(team.name,L,y);
+    doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(110);y+=5;
+    doc.text([team.leader,team.site,'Édité le '+fmtd(today())].filter(Boolean).join('   ·   '),L,y);
+    doc.setTextColor(20);y+=6;line();y+=7;
+    // ---- matériel pris, groupé par chantier ----
+    const outs=DB.moves.filter(m=>m.teamId===team.id&&m.type==='issue'&&m.date>=from&&m.date<=to).sort((a,b)=>a.date<b.date?-1:1);
+    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('Matériel pris',L,y);y+=6;
+    if(!outs.length){doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(120);doc.text('Aucune sortie sur la période.',L,y);doc.setTextColor(20);y+=7;}
+    else{
+      const bySite={};outs.forEach(m=>{const s=(m.site||'').trim()||'(sans chantier)';(bySite[s]=bySite[s]||[]).push(m)});
+      let gT=0,gQ=0;
+      Object.keys(bySite).sort((a,b)=>a.localeCompare(b,'fr')).forEach(site=>{
+        need(20);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(70);doc.text('Chantier : '+site,L,y);doc.setTextColor(20);y+=5;
+        doc.setFontSize(8);doc.setTextColor(140);doc.text('DATE',L,y);doc.text('ARTICLE',L+20,y);doc.text('QTÉ',150,y,{align:'right'});doc.text('VALEUR',R,y,{align:'right'});
+        doc.setTextColor(20);doc.setFont('helvetica','normal');doc.setFontSize(9.5);y+=3;
+        let st=0,sq=0;
+        bySite[site].forEach(m=>{const i=C.items.get(m.itemId)||{},v=m.qty*(m.unitCost||0);st+=v;sq+=m.qty;gT+=v;gQ+=m.qty;
+          need(7);line();y+=4;
+          doc.text(fmtd(m.date),L,y);doc.text(String(i.name||'—').slice(0,40),L+20,y);
+          doc.text(fmtq(m.qty)+' '+(i.unit||''),150,y,{align:'right'});doc.text(money2(v),R,y,{align:'right'});y+=3});
+        line();y+=4;doc.setFont('helvetica','bold');doc.text('Sous-total — '+site,L,y);
+        doc.text(fmtq(sq),150,y,{align:'right'});doc.text(money2(st),R,y,{align:'right'});doc.setFont('helvetica','normal');y+=8;
+      });
+      need(10);line();y+=5;doc.setFont('helvetica','bold');doc.setFontSize(10.5);
+      doc.text('TOTAL PRIS',L,y);doc.text(fmtq(gQ),150,y,{align:'right'});doc.text(money2(gT),R,y,{align:'right'});
+      doc.setFont('helvetica','normal');y+=9;
+    }
+    // ---- encore en possession ----
+    const held=heldAsOf(team.id,to);
+    need(14);doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('Encore en possession au '+fmtd(to),L,y);y+=6;
+    if(!held.length){doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(120);doc.text('Tout est rentré au dépôt.',L,y);doc.setTextColor(20);y+=7;}
+    else{let ht=0;doc.setFont('helvetica','normal');doc.setFontSize(9.5);
+      held.forEach(l=>{const i=C.items.get(l.itemId)||{},v=l.qty*(i.cost||0);ht+=v;need(7);line();y+=4;
+        doc.text(String(i.name||'—').slice(0,46),L,y);doc.text(fmtq(l.qty)+' '+(i.unit||''),150,y,{align:'right'});doc.text(money2(v),R,y,{align:'right'});y+=3});
+      line();y+=4;doc.setFont('helvetica','bold');doc.text('Total engagé',L,y);doc.text(money2(ht),R,y,{align:'right'});doc.setFont('helvetica','normal');y+=9;}
+    // ---- frais de location ----
+    const fr=charges(from,to,team.id);
+    if(fr.length){need(14);doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('Frais de location',L,y);y+=6;
+      let ft=0;doc.setFont('helvetica','normal');doc.setFontSize(9.5);
+      fr.sort((a,b)=>a.date<b.date?-1:1).forEach(r=>{const i=C.items.get(r.itemId)||{};ft+=r.amount;need(7);line();y+=4;
+        doc.text(fmtd(r.date),L,y);doc.text(String(i.name||'—').slice(0,26),L+20,y);doc.setTextColor(120);doc.text(String(r.detail).slice(0,26),110,y);doc.setTextColor(20);
+        doc.text(money2(r.amount),R,y,{align:'right'});y+=3});
+      line();y+=4;doc.setFont('helvetica','bold');doc.text('Total frais',L,y);doc.text(money2(ft),R,y,{align:'right'});doc.setFont('helvetica','normal');y+=6;}
+  });
+  doc.save('releve-'+(tid?slug(ts[0].name):'toutes-equipes')+'-'+fname+'.pdf');
+  toast('Relevé PDF téléchargé.','ok');
+}
+
+/* =====================================================
+   ACTIONS
+   ===================================================== */
+function applyMove(kind,teamId,lines,due,note,site,mdate){
+  const slip=(kind==='issue'?'BS-':'BR-')+pad(kind==='issue'?++DB.seq.bs:++DB.seq.br);
+  const test=[...DB.moves];
+  for(const l of lines){const it=ctx().items.get(l.itemId);if(!it)continue;
+    test.push({id:uid(),slip,date:mdate||today(),ts:Date.now(),type:kind,itemId:l.itemId,teamId,qty:num(l.qty),
+      unitCost:it.cost,rate:kind==='issue'?it.rate:0,due:kind==='issue'?(due||null):null,site:kind==='issue'?(site||''):'',
+      note:kind==='return'&&l.cond==='damaged'?'Rendu endommagé':(note||'')})}
+  if(!valid(compute(test))){if(kind==='issue')--DB.seq.bs;else --DB.seq.br;return null}
+  DB.moves=test;return slip;
+}
+const A={
+  close, print:()=>window.print(),
+  logout:()=>logout(), menu:()=>menuSheet(),
+  theme:()=>{const r=document.documentElement,c=r.getAttribute('data-theme');
+    const n=c==='light'?'dark':'light';r.setAttribute('data-theme',n);localStorage.setItem('depot.theme',n);close();render()},
+  'li-admin':()=>sheet('<h2>Espace responsable</h2><p class="lead">Réservé au magasinier.</p>'+
+    '<div class="f"><label>Code d\u2019accès</label><input id="pin" type="password" inputmode="numeric" autocomplete="off"></div>'+
+    '<div class="hint">Code par défaut : 1234 — modifiable ensuite.</div>'+
+    '<div class="acts"><button class="btn" data-a="close">Annuler</button><button class="btn go" data-a="li-admin-go">Entrer</button></div>'),
+  'li-admin-go':()=>{if(val('pin').trim()!==String(DB.settings.adminPin))return toast('Code incorrect.','bad');
+    close();state.view='home';setSession({role:'admin'})},
+  'li-team':()=>{const ts=DB.teams.filter(t=>!t.archived);
+    if(!ts.length)return toast('Aucune équipe configurée.','bad');
+    sheet('<h2>Espace équipe</h2><p class="lead">Utilisez le code donné par le dépôt.</p>'+
+    '<div class="f"><label>Votre équipe</label><select id="lt">'+ts.map(t=>'<option value="'+t.id+'">'+esc(t.name)+'</option>').join('')+'</select></div>'+
+    '<div class="f"><label>Code d\u2019accès</label><input id="ltp" type="password" inputmode="numeric" autocomplete="off"></div>'+
+    '<div class="acts"><button class="btn" data-a="close">Annuler</button><button class="btn go" data-a="li-team-go">Entrer</button></div>')},
+  'li-team-go':()=>{const t=ctx().teams.get(val('lt'));if(!t)return toast('Choisissez une équipe.','bad');
+    if(String(t.pin||'')!==val('ltp').trim())return toast('Code incorrect.','bad');
+    close();state.view='home';setSession({role:'team',teamId:t.id})},
+  // mouvements
+  'mv-out':(el,id)=>moveSheet('issue',id),
+  'mv-in':(el,id)=>moveSheet('return',id),
+  'mv-save':(el,kind)=>{
+    const iid=val('m-item'), q=num(val('m-qty'));
+    if(!iid)return toast('Choisissez un article.','bad');
+    if(q<=0)return toast('Indiquez une quantité.','bad');
+    const admin=isAdmin(), teamId=admin?val('m-team'):SESSION.teamId;
+    if(!teamId)return toast('Choisissez une équipe.','bad');
+    const max=kind==='issue'?onHand(iid):heldQty(teamId,iid);
+    if(q>max+EPS)return toast(kind==='issue'?'Seulement '+fmtq(max)+' disponible au dépôt.':'L\u2019équipe ne détient que '+fmtq(max)+'.','bad');
+    const lines=[{itemId:iid,qty:q,cond:kind==='return'?(val('m-cond')||'good'):'good'}];
+    const due=kind==='issue'?(val('m-due')||null):null, note=val('m-note').trim();
+    const site=kind==='issue'?val('m-site').trim():'';
+    const mdate=val('m-date')||today();
+    if(kind==='issue'&&!site)return toast('Indiquez le chantier / lieu.','bad');
+    if(admin){
+      const slip=applyMove(kind,teamId,lines,due,note,site,mdate);
+      if(!slip)return toast('Mouvement impossible.','bad');
+      close();commit();toast('Bon '+slip+' enregistré.','ok');bon(slip);
+    }else{
+      const req={id:uid(),type:kind,teamId,lines,date:today(),moveDate:mdate,ts:Date.now(),status:'pending',due,by:val('m-by').trim(),note,site};
+      if(!DB.settings.requireApproval){
+        const slip=applyMove(kind,teamId,lines,due,note,site,mdate);
+        if(!slip)return toast('Mouvement impossible.','bad');
+        req.status='approved';req.slip=slip;
+      }
+      DB.requests.push(req);close();state.view=DB.settings.requireApproval?'reqs':'mine';commit();
+      toast(DB.settings.requireApproval?'Envoyé au responsable.':'Enregistré.','ok');
+    }
+  },
+  // demandes
+  'req-ok':(el,id)=>{const r=DB.requests.find(x=>x.id===id);if(!r)return;
+    const slip=applyMove(r.type,r.teamId,r.lines,r.due,r.note,r.site,r.moveDate||r.date);
+    if(!slip)return toast('Validation impossible : quantité indisponible.','bad');
+    r.status='approved';r.slip=slip;r.decidedAt=today();commit();toast('Validé — bon '+slip+'.','ok');bon(slip)},
+  'req-no':(el,id)=>sheet('<h2>Refuser la demande</h2><p class="lead">Le motif sera visible par l\u2019équipe.</p>'+
+    '<div class="f"><label>Motif</label><input id="rj" placeholder="matériel indisponible, repasser demain…"></div>'+
+    '<div class="acts"><button class="btn" data-a="close">Annuler</button><button class="btn bad" data-a="req-no-go" data-id="'+id+'">Refuser</button></div>'),
+  'req-no-go':(el,id)=>{const r=DB.requests.find(x=>x.id===id);if(!r)return;
+    r.status='rejected';r.decidedNote=val('rj').trim();r.decidedAt=today();close();commit();toast('Demande refusée.')},
+  'req-cancel':(el,id)=>confirmBox('Annuler cette demande ?',()=>{DB.requests=DB.requests.filter(r=>r.id!==id);commit();toast('Demande annulée.')},{danger:true,yes:'Annuler'}),
+  // articles
+  'photo-pick':()=>pickPhoto(()=>redrawPhoto()),
+  'photo-clear':()=>{DRAFT_PHOTO='';redrawPhoto()},
+  'item-new':()=>itemSheet(null),'item-edit':(el,id)=>itemSheet(id),
+  'item-save':(el,id)=>{
+    const name=val('f-name').trim();if(!name)return toast('Indiquez un nom.','bad');
+    const d={name,cat:val('f-cat').trim(),unit:val('f-unit').trim()||'pcs',cost:num(val('f-cost')),
+      rate:num(val('f-rate')),min:num(val('f-min')),loc:val('f-loc').trim()};
+    if(id){const it=ctx().items.get(id);Object.assign(it,d);it.photo=DRAFT_PHOTO||'';if(!it.returnable)it.rate=0}
+    else{d.returnable=val('f-ret')==='1';if(!d.returnable)d.rate=0;
+      const it=Object.assign({id:uid(),archived:false,notes:''},d);it.photo=DRAFT_PHOTO||'';DB.items.push(it);
+      const q=num(val('f-qty'));
+      if(q>0)DB.moves.push({id:uid(),slip:'REA-'+pad(++DB.seq.rea),date:today(),ts:Date.now(),type:'restock',
+        itemId:it.id,teamId:null,qty:q,unitCost:it.cost,rate:0,due:null,note:'Stock initial'})}
+    close();commit();toast('Article enregistré.','ok')},
+  'item-del':(el,id)=>confirmBox('Supprimer cet article ? Son historique reste dans le journal.',
+    ()=>{DB.items=DB.items.filter(x=>x.id!==id);close();commit();toast('Article supprimé.')},{danger:true,yes:'Supprimer'}),
+  adjust:(el,id)=>adjustSheet(id),
+  'adjust-save':()=>{
+    const it=ctx().items.get(val('a-item')),type=val('a-type'),q=num(val('a-qty'));
+    if(!it)return toast('Choisissez un article.','bad');
+    if(!q||(type==='restock'&&q<0))return toast('Indiquez une quantité valide.','bad');
+    const delta=type==='adjust'?q:type==='writeoff'?-Math.abs(q):q;
+    if(type!=='restock'&&onHand(it.id)+delta<-EPS)return toast('Le stock passerait sous zéro ('+fmtq(onHand(it.id))+' en dépôt).','bad');
+    const nc=val('a-cost').trim();if(nc!==''&&num(nc)>=0)it.cost=num(nc);
+    DB.moves.push({id:uid(),slip:(type==='restock'?'REA-':'AJU-')+pad(++DB.seq.rea),date:val('a-date')||today(),
+      ts:Date.now(),type,itemId:it.id,teamId:null,qty:type==='writeoff'?Math.abs(q):q,unitCost:it.cost||0,rate:0,due:null,note:val('a-note').trim()});
+    close();commit();toast('Stock mis à jour.','ok')},
+  // équipes
+  'team-new':()=>teamSheet(null),'team-edit':(el,id)=>teamSheet(id),'team-open':(el,id)=>teamDetail(id),
+  'team-quick':()=>{
+    const name=val('nt-name').trim();if(!name)return toast('Indiquez un nom d\u2019équipe.','bad');
+    const pin=val('nt-pin').trim();if(!/^\d{4,8}$/.test(pin))return toast('Le code doit contenir 4 à 8 chiffres.','bad');
+    DB.teams.push({id:uid(),archived:false,name,leader:val('nt-leader').trim(),phone:'',site:'',pin,notes:''});
+    commit();toast('Équipe créée — code '+pin+'.','ok')},
+  'team-save':(el,id)=>{
+    const name=val('t-name').trim();if(!name)return toast('Indiquez un nom.','bad');
+    const pin=val('t-pin').trim();if(!/^\d{4,8}$/.test(pin))return toast('Le code doit contenir 4 à 8 chiffres.','bad');
+    const d={name,leader:val('t-leader').trim(),phone:val('t-phone').trim(),site:val('t-site').trim(),pin};
+    if(id)Object.assign(ctx().teams.get(id),d);else DB.teams.push(Object.assign({id:uid(),archived:false,notes:''},d));
+    close();commit();toast('Équipe enregistrée.','ok')},
+  'team-del':(el,id)=>confirmBox('Supprimer cette équipe ? Son historique reste dans le journal.',
+    ()=>{DB.teams=DB.teams.filter(x=>x.id!==id);close();commit();toast('Équipe supprimée.')},{danger:true,yes:'Supprimer'}),
+  'team-newcode':(el,id)=>{const t=ctx().teams.get(id);if(!t)return;
+    confirmBox('Générer un nouveau code d\u2019accès pour « '+t.name+' » ? L\u2019ancien code ne fonctionnera plus.',()=>{
+      const code=String(1000+Math.floor(Math.random()*9000));t.pin=code;commit();
+      sheet('<h2>Nouveau code</h2><p class="lead">Communiquez ce code au chef d\u2019équipe. L\u2019ancien ne marche plus.</p>'+
+        '<div class="stat" style="text-align:center"><div class="l">'+esc(t.name)+'</div><div class="v num" style="font-size:38px;letter-spacing:6px">'+code+'</div></div>'+
+        '<div class="acts"><button class="btn go" data-a="close">Compris</button></div>');
+    },{yes:'Générer',title:'Réinitialiser le code'})},
+  bon:(el,slip)=>bon(slip),
+  'bon-pdf':(el,slip)=>bonPDF(slip),
+  'xls-open':(el,id)=>{XP.team=id||'';exportSheet(id||'')},
+  'xls-team':(el,id)=>{XP.team=id||'';XP.mode='month';exportSheet(id||'')},
+  'xp-month':()=>{XP.team=val('x-team');XP.day=val('x-day')||XP.day;XP.mode='month';exportSheet()},
+  'xp-day':()=>{XP.team=val('x-team');XP.month=val('x-month')||XP.month;XP.mode='day';exportSheet()},
+  'xp-xlsx':()=>{const g=readExportPeriod();close();doExport(g.from,g.to,g.tid,g.plabel,g.fname)},
+  'xp-pdf':()=>{const g=readExportPeriod();close();doExportPDF(g.from,g.to,g.tid,g.plabel,g.fname)},
+  more:()=>{state.limit+=20;render()},
+  // données
+  'csv-inv':()=>{const C=ctx();
+    const out=[['Article','Catégorie','Type','Unité','Emplacement','En dépôt','Sorti','Total','Valeur unitaire','Valeur totale','Tarif/jour','Seuil']]
+    .concat(DB.items.map(i=>[i.name,i.cat,i.returnable?'Prêtable':'Consommable',i.unit,i.loc,onHand(i.id),C.heldItem[i.id]||0,owned(i),
+      String(i.cost).replace('.',','),(owned(i)*i.cost).toFixed(2).replace('.',','),String(i.rate||0).replace('.',','),i.min||0]));
+    saveFile('inventaire-'+today()+'.csv',toCSV(out));toast('Inventaire exporté.','ok')},
+  'csv-ledger':()=>{const C=ctx();
+    const rows=[...DB.moves].sort((a,b)=>a.ts-b.ts);
+    const out=[['Date','Bon','Type','Article','Équipe','Quantité','Valeur unitaire','Valeur','Retour prévu','Note']]
+    .concat(rows.map(m=>{const i=C.items.get(m.itemId),t=C.teams.get(m.teamId);
+      return [fmtd(m.date),m.slip,TYPE[m.type][0],i?i.name:'',t?t.name:'',m.qty,String(m.unitCost).replace('.',','),
+        (m.qty*m.unitCost).toFixed(2).replace('.',','),fmtd(m.due)||'',m.note||'']}));
+    saveFile('journal-'+today()+'.csv',toCSV(out));toast('Journal exporté.','ok')},
+  'csv-backup':()=>{saveFile('sauvegarde-depot-'+today()+'.json',
+    JSON.stringify({items:DB.items,teams:DB.teams,moves:DB.moves,requests:DB.requests,settings:DB.settings,seq:DB.seq},null,2),'application/json');
+    toast('Sauvegarde téléchargée.','ok')},
+  restore:()=>$('#imp').click(),
+  'set-save':()=>{const s=DB.settings;
+    s.company=val('st-company').trim()||'Dépôt';s.currency=val('st-cur').trim()||'€';
+    s.grace=Math.max(0,Math.round(num(val('st-grace'))));s.sep=val('st-sep');
+    const p=val('st-pin').trim();if(!/^\d{4,8}$/.test(p))return toast('Le code doit contenir 4 à 8 chiffres.','bad');
+    s.adminPin=p;s.requireApproval=val('st-appr')==='1';close();commit();toast('Paramètres enregistrés.','ok')},
+  sample:()=>{if(DB.items.length||DB.teams.length)return;loadSample();state.view='home';save();render();toast('Exemple chargé.','ok')},
+  erase:()=>confirmBox('Supprime définitivement articles, équipes, mouvements et demandes.',
+    ()=>{const s=DB.settings;DB=defaults();DB.settings=s;state.view='home';close();commit();toast('Données effacées.')},
+    {danger:true,word:'SUPPRIMER',yes:'Tout effacer',title:'Effacer toutes les données'})
+};
+
+/* ---------- exemple ---------- */
+function loadSample(){
+  const s=DB.settings;DB=defaults();DB.settings=Object.assign(s,{company:'BTP Construction'});
+  const mk=(n,c,u,co,ra,mi,lo,ret)=>({id:uid(),name:n,cat:c,unit:u,cost:co,rate:ret?ra:0,min:mi,loc:lo,notes:'',returnable:ret,archived:false});
+  const items=[
+    mk('Meuleuse d\u2019angle 115','Outillage','pcs',95,4,2,'Allée 2',true),
+    mk('Perceuse sans fil','Outillage','pcs',120,3.5,3,'Allée 2',true),
+    mk('Marteau-piqueur','Outillage','pcs',480,12,1,'Allée 3',true),
+    mk('Bétonnière 200 L','Gros matériel','pcs',1400,18,1,'Cour',true),
+    mk('Échafaudage roulant','Accès','pcs',650,9,1,'Cour',true),
+    mk('Échelle alu 4 m','Accès','pcs',180,3,2,'Cour',true),
+    mk('Groupe électrogène 5 kVA','Gros matériel','pcs',900,15,1,'Cour',true),
+    mk('Casque de chantier','EPI','pcs',18,0,10,'Allée 1',false),
+    mk('Ciment 25 kg','Matériaux','sac',7.5,0,40,'Réserve',false),
+    mk('Fer à béton 12 mm','Matériaux','m',3.2,0,200,'Réserve',false)];
+  DB.items=items;
+  DB.teams=[
+    {id:uid(),name:'Équipe Nord',leader:'Julien Moreau',phone:'06 12 34 56 78',site:'Rue des Lilas',pin:'1111',notes:'',archived:false},
+    {id:uid(),name:'Équipe Sud',leader:'Claire Dubois',phone:'06 98 76 54 32',site:'ZI Villeurbanne',pin:'2222',notes:'',archived:false},
+    {id:uid(),name:'Équipe Rénovation',leader:'Samir Haddad',phone:'06 45 67 89 01',site:'Centre-ville',pin:'3333',notes:'',archived:false}];
+  const [meul,perc,mart,beto,echa,eche,gene,casq,cime,ferb]=items;
+  const [tN,tS,tR]=DB.teams;
+  const d=n=>{const t=new Date();t.setDate(t.getDate()-n);return ymd(t)};
+  const T=n=>Date.now()-n*86400000;
+  const mv=(slip,dd,type,it,te,q,x)=>Object.assign({id:uid(),slip,date:d(dd),ts:T(dd),type,itemId:it.id,
+    teamId:te?te.id:null,qty:q,unitCost:it.cost,rate:0,due:null,note:''},x||{});
+  DB.moves=[
+    mv('REA-0001',45,'restock',meul,null,6,{note:'Stock initial'}),
+    mv('REA-0002',45,'restock',perc,null,8,{note:'Stock initial'}),
+    mv('REA-0003',45,'restock',mart,null,3,{note:'Stock initial'}),
+    mv('REA-0004',45,'restock',beto,null,2,{note:'Stock initial'}),
+    mv('REA-0005',45,'restock',echa,null,4,{note:'Stock initial'}),
+    mv('REA-0006',45,'restock',eche,null,5,{note:'Stock initial'}),
+    mv('REA-0007',45,'restock',gene,null,2,{note:'Stock initial'}),
+    mv('REA-0008',45,'restock',casq,null,30,{note:'Stock initial'}),
+    mv('REA-0009',45,'restock',cime,null,150,{note:'Stock initial'}),
+    mv('REA-0010',45,'restock',ferb,null,800,{note:'Stock initial'}),
+    mv('BS-0001',18,'issue',beto,tN,1,{rate:18,due:d(4)}),
+    mv('BS-0001',18,'issue',meul,tN,2,{rate:4,due:d(4)}),
+    mv('BS-0002',12,'issue',echa,tS,2,{rate:9,due:d(-3)}),
+    mv('BS-0003',8,'issue',perc,tR,3,{rate:3.5,due:d(-6)}),
+    mv('BS-0003',8,'issue',mart,tR,1,{rate:12,due:d(-6)}),
+    mv('BS-0004',5,'issue',cime,tS,40,{}),
+    mv('BS-0005',1,'issue',eche,tN,1,{rate:3,due:d(-10)}),
+    mv('BR-0001',3,'return',meul,tN,1,{note:'Une rendue'}),
+    mv('AJU-0001',6,'adjust',cime,null,-8,{note:'Sacs humides au rebut'})];
+  DB.seq={rea:10,bs:5,br:1};
+  DB.requests=[
+    {id:uid(),type:'issue',teamId:tS.id,lines:[{itemId:gene.id,qty:1,cond:'good'}],date:today(),ts:Date.now()-5400e3,
+     status:'pending',due:d(-7),by:'Claire Dubois',note:'Pas de courant sur le chantier lundi'},
+    {id:uid(),type:'return',teamId:tN.id,lines:[{itemId:beto.id,qty:1,cond:'good'}],date:today(),ts:Date.now()-1200e3,
+     status:'pending',by:'Julien Moreau',note:'Ramenée ce soir'}];
+}
+
+/* ---------- événements ---------- */
+document.addEventListener('click',e=>{
+  const v=e.target.closest('[data-v]');
+  if(v){state.view=v.dataset.v;state.q='';state.limit=20;state.jteam='';state.jfrom='';state.jto='';close();render();return}
+  const s=e.target.closest('[data-s]');
+  if(s){state.seg=s.dataset.s;render();return}
+  const a=e.target.closest('[data-a]');
+  if(!a){if(e.target.classList&&e.target.classList.contains('ov'))close();return}
+  const f=A[a.dataset.a];if(f)f(a,a.dataset.id);
+});
+document.addEventListener('input',e=>{
+  if(e.target.hasAttribute&&e.target.hasAttribute('data-q')){
+    state.q=e.target.value;
+    const p=e.target.selectionStart;render();
+    const n=document.querySelector('[data-q]');if(n){n.focus();try{n.setSelectionRange(p,p)}catch(x){}}
+  }
+});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.id==='f-ret'){const w=$('#rw');if(w)w.style.display=el.value==='1'?'':'none';return}
+  if(el.hasAttribute&&el.hasAttribute('data-jf')){state[el.dataset.jf]=el.value;render()}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&$('#modal').firstChild)close();
+  if(e.key==='Enter'){const id=document.activeElement&&document.activeElement.id;
+    if(id==='pin')A['li-admin-go']();else if(id==='ltp')A['li-team-go']()}
+});
+function dataURLtoBlob(u){const a=u.split(','),m=a[0].match(/:(.*?);/)[1],b=atob(a[1]);let n=b.length;const arr=new Uint8Array(n);while(n--)arr[n]=b.charCodeAt(n);return new Blob([arr],{type:m})}
+async function uploadPhoto(dataUrl){
+  if(!SB) return dataUrl; // fallback: keep inline
+  try{
+    const blob=dataURLtoBlob(dataUrl);
+    const name='item-'+uid()+'.jpg';
+    const {error}=await SB.storage.from('photos').upload(name,blob,{contentType:'image/jpeg',upsert:true});
+    if(error) throw error;
+    const {data}=SB.storage.from('photos').getPublicUrl(name);
+    return data.publicUrl;
+  }catch(e){toast('Envoi de la photo échoué.','bad');return dataUrl}
+}
+$('#photo-in').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  if(f.size>12*1024*1024)return toast('Image trop lourde (max 12 Mo).','bad');
+  compressImg(f,async data=>{if(!data)return toast('Impossible de lire cette image.','bad');
+    DRAFT_PHOTO=data; if(PHOTO_CB)PHOTO_CB(data); else redrawPhoto();
+    toast('Envoi de la photo…');
+    const url=await uploadPhoto(data);
+    DRAFT_PHOTO=url; redrawPhoto();
+  });
+});
+$('#imp').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);
+    if(!Array.isArray(d.items)||!Array.isArray(d.teams)||!Array.isArray(d.moves))throw 0;
+    confirmBox('Remplacer toutes les données ? La sauvegarde contient '+d.items.length+' articles, '+d.teams.length+' équipes et '+d.moves.length+' mouvements.',
+      ()=>{DB=Object.assign(defaults(),{items:d.items,teams:d.teams,moves:d.moves,requests:d.requests||[],
+        settings:Object.assign(defaults().settings,d.settings||{}),seq:Object.assign(defaults().seq,d.seq||{})});
+        commit();toast('Sauvegarde restaurée.','ok')},{yes:'Remplacer',title:'Restaurer',danger:true})
+  }catch(x){toast('Fichier invalide.','bad')}};
+  r.readAsText(f);
+});
+(function(){const t=localStorage.getItem('depot.theme');if(t)document.documentElement.setAttribute('data-theme',t)})();
+load();
+function bootScreen(msg,retry){
+  $('#root').innerHTML='<div class="login"><div class="in" style="text-align:center">'+
+    '<div class="mark" style="margin:0 auto 20px">'+(retry?'⚠':'⏳')+'</div>'+
+    '<h1>'+(retry?'Connexion impossible':'Connexion au dépôt…')+'</h1>'+
+    '<p>'+esc(msg)+'</p>'+
+    (retry?'<button class="cta" data-a="reboot">Réessayer</button>':'')+
+  '</div></div>';
+}
+async function boot(){
+  bootScreen('Chargement des données…');
+  if(!window.supabase){bootScreen('Bibliothèque de connexion non chargée. Vérifiez votre connexion internet.',true);return}
+  const ok=await sbInit();
+  if(!ok){bootScreen('Impossible de joindre la base de données. Vérifiez la connexion, puis réessayez.',true);return}
+  render();
+}
+document.addEventListener('click',e=>{const r=e.target.closest('[data-a="reboot"]');if(r)boot()});
+boot();
+})();
+</script>
+</body>
+</html>
