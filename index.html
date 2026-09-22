@@ -761,7 +761,8 @@ function tHome(){
   '<div class="card"><div class="big"><div><div style="font-size:12.5px;color:var(--muted)">Valeur sous votre responsabilité</div>'+
     '<div class="v num">'+money(v)+'</div></div></div>'+
     (frais>0?'<div class="hint">Frais de location cumulés : '+money(frais)+'.</div>':'<div class="hint">Le matériel reste sous votre responsabilité jusqu\u2019à sa restitution.</div>')+'</div>'+
-  (h.length?'<button class="cta" data-a="mv-in">Déclarer un retour →</button>':'<button class="cta" data-v="stock">Emprunter du matériel →</button>')+
+  '<button class="cta" data-a="mv-out">Demander du matériel →</button>'+
+  '<button class="cta sec" data-a="ch-newsheet" style="margin-top:-14px">＋ Créer un chantier</button>'+
   (h.length?'<div class="sec"><h2>Détail</h2></div>'+h.map(l=>{
     const i=C.items.get(l.itemId),d=dueFor(t.id,l.itemId),isLate=d&&d<today();
     return '<div class="card"><div class="row"><div class="grow">'+
@@ -879,6 +880,12 @@ function chantierSheet(id){
     '<div class="f"><label>Adresse / précision</label><input id="ch-addr2" value="'+esc(c.addr||'')+'"></div>'+
     '<div class="acts"><button class="btn bad" data-a="ch-del" data-id="'+id+'">Supprimer</button>'+
     '<button class="btn go" data-a="ch-save" data-id="'+id+'">Enregistrer</button></div>');
+}
+function chNewSheet(){
+  sheet('<h2>Nouveau chantier</h2><p class="lead">Visible par toutes les équipes, disponible aussitôt lors d\u2019une sortie.</p>'+
+    '<div class="f"><label>Nom du chantier</label><input id="chn-name" placeholder="Rue des Lilas, ZI Nord…" autocomplete="off"></div>'+
+    '<div class="f"><label>Adresse / précision (facultatif)</label><input id="chn-addr" placeholder="ville, référence…"></div>'+
+    '<div class="acts"><button class="btn" data-a="close">Annuler</button><button class="btn go" data-a="chn-save">Créer le chantier</button></div>');
 }
 function moveSheet(kind,itemId){ // kind 'issue' | 'return'
   const C=ctx();
@@ -1552,6 +1559,10 @@ const A={
     DB.chantiers.push({id:uid(),name,addr:val('ch-addr').trim(),archived:false});
     commit();toast('Chantier « '+name+' » créé.','ok')},
   'ch-edit':(el,id)=>chantierSheet(id),
+  'ch-newsheet':()=>chNewSheet(),
+  'chn-save':()=>{const name=val('chn-name').trim();if(!name)return toast('Indiquez un nom de chantier.','bad');
+    if(chantierExists(name))return toast('Ce chantier existe déjà.','bad');
+    DB.chantiers.push({id:uid(),name,addr:val('chn-addr').trim(),archived:false});close();commit();toast('Chantier « '+name+' » créé.','ok')},
   'ch-save':(el,id)=>{const c=DB.chantiers.find(x=>x.id===id);if(!c)return;
     const name=val('ch-name2').trim();if(!name)return toast('Indiquez un nom.','bad');
     c.name=name;c.addr=val('ch-addr2').trim();close();commit();toast('Chantier enregistré.','ok')},
