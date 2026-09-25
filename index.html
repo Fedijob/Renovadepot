@@ -74,6 +74,17 @@ button,input,select,textarea{font:inherit;color:inherit}
   font-size:15.5px;font-weight:700;cursor:pointer;margin:16px 0 22px;letter-spacing:-.01em}
 .cta:hover{background:var(--green2)}
 .cta.sec{background:var(--card);color:var(--text);border:1px solid var(--line2)}
+.cta-huge{padding:26px 20px;font-size:19px;border-radius:20px}
+.wrap.wizard{padding-bottom:48px}
+.wizhome{text-align:center;padding:34px 6px 10px;display:flex;flex-direction:column;align-items:center}
+.wizicon{font-size:52px;line-height:1;margin-bottom:16px}
+.wizhi{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.wizsub{color:var(--muted);font-size:15px;max-width:30ch;margin-bottom:26px}
+.wizhome .cta-huge{max-width:360px}
+.backlink{background:none;border:0;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;padding:4px 0;margin-bottom:6px}
+.backlink:hover{color:var(--text)}
+.wizdone{background:var(--green-dim);color:var(--green);border-radius:12px;padding:12px 16px;font-weight:600;font-size:14.5px;margin-bottom:16px}
+@media (min-width:1024px){.wizhome{padding-top:60px}}
 .cta.sec:hover{border-color:var(--green);color:var(--green)}
 .btn{padding:11px 14px;border:1px solid var(--line2);background:var(--card2);color:var(--text);border-radius:12px;
   cursor:pointer;font-weight:600;font-size:13.5px;line-height:1.2}
@@ -506,12 +517,61 @@ function saveFile(n,c,t){const b=new Blob(['\ufeff'+c],{type:t||'text/csv;charse
 const ADMIN=['home','stock','teams','chantiers','log','reqs'], TEAM=['home','stock','chantiers','reqs','log'];
 function render(){
   if(!SESSION)return login();
-  const allowed=isAdmin()?ADMIN:TEAM;
+  if(!isAdmin())return renderWorker();
+  const allowed=ADMIN;
   if(allowed.indexOf(state.view)<0)state.view='home';
-  const body=isAdmin()
-    ? ({home:aHome,stock:aStock,teams:aTeams,chantiers:vChantiers,log:aLog,reqs:aReqs}[state.view])()
-    : ({home:tHome,stock:tStock,chantiers:vChantiers,reqs:tReqs,log:tLog}[state.view])();
+  const body=({home:aHome,stock:aStock,teams:aTeams,chantiers:vChantiers,log:aLog,reqs:aReqs}[state.view])();
   $('#root').innerHTML='<div class="wrap">'+header()+body+'</div>'+tabs();
+}
+function renderWorker(){
+  const t=ctx().teams.get(SESSION.teamId);
+  if(!t)return logout();
+  const step=state.wstep||0;
+  const body = step===1 ? wChantier(t) : step===2 ? wMaterial(t) : wHome(t);
+  $('#root').innerHTML='<div class="wrap wizard">'+workerHeader(t)+body+'</div>';
+}
+function workerHeader(t){
+  return '<div class="hdr"><img class="brandlogo" src="'+LOGO+'" alt="Renovaclos">'+
+    '<div class="nm"><span>'+esc(t.name)+'</span></div>'+
+    '<button class="iconbtn" data-a="logout" aria-label="Se déconnecter">⎋</button></div>';
+}
+function wHome(t){
+  return '<div class="wizhome">'+
+    '<div class="wizicon">🧰</div>'+
+    '<div class="wizhi">Bonjour, '+esc(t.name)+'</div>'+
+    '<div class="wizsub">Appuyez pour prendre du matériel au dépôt.</div>'+
+    '<button class="cta cta-huge" data-a="w-start">Demander du matériel</button>'+
+  '</div>';
+}
+function wChantier(t){
+  return '<button class="backlink" data-a="w-home">← Retour</button>'+
+    '<h1 class="title">Sur quel chantier ?</h1>'+
+    '<p class="sub" style="margin-bottom:18px">Écrivez le nom du chantier où va le matériel.</p>'+
+    '<div class="f"><input id="w-site" placeholder="Nom du chantier" autocomplete="off" value="'+esc(state.wsite||'')+'" style="font-size:17px;padding:15px 16px"></div>'+
+    '<button class="cta" data-a="w-site-next">Continuer →</button>';
+}
+function wMaterial(t){
+  const avail=DB.items.filter(i=>!i.archived&&onHand(i.id)>EPS).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  const took=state.wcart||0;
+  return '<button class="backlink" data-a="w-chantier">← Chantier : '+esc(state.wsite)+'</button>'+
+    '<h1 class="title">Que prenez-vous ?</h1>'+
+    (took>0?'<div class="wizdone">✓ '+took+' article'+(took>1?'s':'')+' pris pour ce chantier</div>':'<p class="sub" style="margin-bottom:16px">Appuyez sur un article pour le prendre.</p>')+
+    (avail.length?'<div class="mgrid">'+avail.map(i=>
+      '<div class="card pcard" data-a="w-pick" data-id="'+i.id+'">'+thumb(i)+'<div class="pin">'+
+      '<div class="ttl">'+esc(i.name)+'</div>'+
+      '<div class="sub">'+fmtq(onHand(i.id))+' '+esc(i.unit)+' dispo</div>'+
+      '<button class="btn go" style="width:100%;margin-top:9px;justify-content:center" data-a="w-pick" data-id="'+i.id+'">Prendre</button>'+
+      '</div></div>').join('')+'</div>'
+    :'<div class="card"><div class="empty"><b>Aucun matériel disponible</b>Le dépôt est vide pour le moment.</div></div>')+
+    '<button class="cta'+(took>0?'':' sec')+'" data-a="w-done" style="margin-top:16px">'+(took>0?'Terminé ✓':'Terminer sans prendre')+'</button>';
+}
+function wTakeSheet(itemId){
+  const it=ctx().items.get(itemId);if(!it)return;
+  sheet('<h2>'+esc(it.name)+'</h2><p class="lead">Chantier : '+esc(state.wsite)+'</p>'+
+    '<div class="f"><label>Quantité</label><input id="w-qty" type="number" inputmode="decimal" value="1" min="0" step="1" style="font-size:19px;padding:14px 16px"></div>'+
+    '<div class="hint">Disponible au dépôt : '+fmtq(onHand(itemId))+' '+esc(it.unit)+'</div>'+
+    '<div class="acts"><button class="btn" data-a="close">Annuler</button>'+
+    '<button class="btn go" data-a="w-take" data-id="'+itemId+'">Prendre</button></div>');
 }
 function login(){
   $('#root').innerHTML='<div class="login"><div class="in">'+
@@ -1470,7 +1530,22 @@ const A={
     '<div class="acts"><button class="btn" data-a="close">Annuler</button><button class="btn go" data-a="li-team-go">Entrer</button></div>')},
   'li-team-go':()=>{const t=ctx().teams.get(val('lt'));if(!t)return toast('Choisissez une équipe.','bad');
     if(String(t.pin||'')!==val('ltp').trim())return toast('Code incorrect.','bad');
-    close();state.view='home';setSession({role:'team',teamId:t.id})},
+    close();state.wstep=0;state.wsite='';state.wcart=0;setSession({role:'team',teamId:t.id})},
+  // --- assistant équipe (simplifié) ---
+  'w-start':()=>{state.wstep=1;render()},
+  'w-home':()=>{state.wstep=0;render()},
+  'w-chantier':()=>{state.wstep=1;render()},
+  'w-site-next':()=>{const name=val('w-site').trim();if(!name)return toast('Écrivez le nom du chantier.','bad');
+    state.wsite=name;ensureChantier(name);state.wcart=0;state.wstep=2;commit()},
+  'w-pick':(el,id)=>wTakeSheet(id),
+  'w-take':(el,id)=>{const it=ctx().items.get(id);if(!it)return;
+    const q=num(val('w-qty'));if(q<=0)return toast('Indiquez une quantité.','bad');
+    if(q>onHand(id)+EPS)return toast('Seulement '+fmtq(onHand(id))+' disponible au dépôt.','bad');
+    const slip=applyMove('issue',SESSION.teamId,[{itemId:id,qty:q,cond:'good'}],null,'',state.wsite,today());
+    if(!slip)return toast('Impossible d\u2019enregistrer.','bad');
+    state.wcart=(state.wcart||0)+1;close();commit();toast(esc(it.name)+' × '+fmtq(q)+' pris.','ok')},
+  'w-done':()=>{const n=state.wcart||0;const site=state.wsite;state.wstep=0;state.wsite='';state.wcart=0;render();
+    if(n>0)toast(n+' article'+(n>1?'s':'')+' enregistré'+(n>1?'s':'')+' pour '+site+'.','ok')},
   // mouvements
   'mv-out':(el,id)=>moveSheet('issue',id),
   'mv-in':(el,id)=>moveSheet('return',id),
