@@ -356,17 +356,17 @@ const M={
     from:r=>({id:r.id,name:r.name,leader:r.leader||'',phone:r.phone||'',site:r.site||'',pin:r.pin||'',archived:!!r.archived,notes:''})},
   moves:{
     to:m=>({id:m.id,slip:m.slip||'',date:m.date,ts:m.ts||0,type:m.type,item_id:m.itemId||null,team_id:m.teamId||null,
-      qty:+m.qty||0,unit_cost:+m.unitCost||0,rate:+m.rate||0,due:m.due||null,site:m.site||'',note:m.note||''}),
+      qty:+m.qty||0,unit_cost:+m.unitCost||0,rate:+m.rate||0,due:m.due||null,site:m.site||'',chantier_id:m.chantierId||null,note:m.note||''}),
     from:r=>({id:r.id,slip:r.slip||'',date:r.date,ts:+r.ts||0,type:r.type,itemId:r.item_id,teamId:r.team_id,
-      qty:+r.qty||0,unitCost:+r.unit_cost||0,rate:+r.rate||0,due:r.due||null,site:r.site||'',note:r.note||''})},
+      qty:+r.qty||0,unitCost:+r.unit_cost||0,rate:+r.rate||0,due:r.due||null,site:r.site||'',chantierId:r.chantier_id||null,note:r.note||''})},
   requests:{
     to:q=>({id:q.id,type:q.type,team_id:q.teamId,lines:q.lines||[],date:q.date||null,ts:q.ts||0,status:q.status||'pending',
       due:q.due||null,site:q.site||'',by:q.by||'',note:q.note||'',slip:q.slip||'',decided_note:q.decidedNote||'',decided_at:q.decidedAt||null}),
     from:r=>({id:r.id,type:r.type,teamId:r.team_id,lines:r.lines||[],date:r.date||null,ts:+r.ts||0,status:r.status||'pending',
       due:r.due||null,site:r.site||'',by:r.by||'',note:r.note||'',slip:r.slip||'',decidedNote:r.decided_note||'',decidedAt:r.decided_at||null})},
   chantiers:{
-    to:c=>({id:c.id,name:c.name,addr:c.addr||'',archived:!!c.archived}),
-    from:r=>({id:r.id,name:r.name,addr:r.addr||'',archived:!!r.archived})}
+    to:c=>({id:c.id,name:c.name,addr:c.addr||'',team_id:c.teamId||null,metrage:+c.metrage||0,munit:c.munit||'m',archived:!!c.archived}),
+    from:r=>({id:r.id,name:r.name,addr:r.addr||'',teamId:r.team_id||null,metrage:+r.metrage||0,munit:r.munit||'m',archived:!!r.archived})}
 };
 const TABLES=['items','teams','moves','requests','chantiers'];
 
@@ -523,11 +523,16 @@ function render(){
   const body=({home:aHome,stock:aStock,teams:aTeams,chantiers:vChantiers,log:aLog,reqs:aReqs}[state.view])();
   $('#root').innerHTML='<div class="wrap">'+header()+body+'</div>'+tabs();
 }
+function teamChantiers(teamId){return DB.chantiers.filter(c=>!c.archived&&c.teamId===teamId).sort((a,b)=>a.name.localeCompare(b.name,'fr'))}
+function chantierById(cid){return DB.chantiers.find(c=>c.id===cid)}
+function chantierMoves(cid){return DB.moves.filter(m=>m.type==='issue'&&m.chantierId===cid).sort((a,b)=>b.ts-a.ts)}
+function chantierTotal(cid){return chantierMoves(cid).reduce((s,m)=>s+m.qty*(m.unitCost||0),0)}
+function chantierQty(cid){return chantierMoves(cid).reduce((s,m)=>s+m.qty,0)}
 function renderWorker(){
   const t=ctx().teams.get(SESSION.teamId);
   if(!t)return logout();
   const step=state.wstep||0;
-  const body = step===1 ? wChantier(t) : step===2 ? wMaterial(t) : wHome(t);
+  const body = step===1 ? wChantierList(t) : step===2 ? wFolder(t) : step===3 ? wHistory(t) : wHome(t);
   $('#root').innerHTML='<div class="wrap wizard">'+workerHeader(t)+body+'</div>';
 }
 function workerHeader(t){
@@ -539,39 +544,84 @@ function wHome(t){
   return '<div class="wizhome">'+
     '<div class="wizicon">🧰</div>'+
     '<div class="wizhi">Bonjour, '+esc(t.name)+'</div>'+
-    '<div class="wizsub">Appuyez pour prendre du matériel au dépôt.</div>'+
+    '<div class="wizsub">Ouvrez un chantier pour y ajouter le matériel pris.</div>'+
     '<button class="cta cta-huge" data-a="w-start">Demander du matériel</button>'+
+    '<button class="cta sec" data-a="w-hist" style="margin-top:-14px">📋 Mon historique</button>'+
+    '<button class="btn" data-a="logout" style="margin-top:14px">Se déconnecter</button>'+
   '</div>';
 }
-function wChantier(t){
+function wChantierList(t){
+  const list=teamChantiers(t.id);
   return '<button class="backlink" data-a="w-home">← Retour</button>'+
-    '<h1 class="title">Sur quel chantier ?</h1>'+
-    '<p class="sub" style="margin-bottom:18px">Écrivez le nom du chantier où va le matériel.</p>'+
-    '<div class="f"><input id="w-site" placeholder="Nom du chantier" autocomplete="off" value="'+esc(state.wsite||'')+'" style="font-size:17px;padding:15px 16px"></div>'+
-    '<button class="cta" data-a="w-site-next">Continuer →</button>';
+    '<h1 class="title">Mes chantiers</h1>'+
+    '<p class="sub" style="margin-bottom:16px">Ouvrez un chantier ou créez-en un nouveau.</p>'+
+    '<button class="cta" data-a="w-newch">＋ Nouveau chantier</button>'+
+    (list.length?'<div class="list">'+list.map(c=>{
+      const tot=chantierTotal(c.id),n=chantierMoves(c.id).length;
+      return '<div class="card" data-a="w-open" data-id="'+c.id+'"><div class="row"><div class="dot big mute">'+ICO.pin+'</div>'+
+        '<div class="grow"><div class="ttl">'+esc(c.name)+'</div>'+
+        '<div class="sub">'+(c.metrage?fmtq(c.metrage)+' '+esc(c.munit)+' · ':'')+n+' article'+(n>1?'s':'')+'</div></div>'+
+        '<div class="right"><div class="n">'+money(tot)+'</div></div></div></div>';
+    }).join('')+'</div>'
+    :'<div class="card"><div class="empty"><b>Aucun chantier</b>Créez votre premier chantier ci-dessus.</div></div>');
 }
-function wMaterial(t){
+function wFolder(t){
+  const c=chantierById(state.wchantier);
+  if(!c){state.wstep=1;return wChantierList(t);}
+  const moves=chantierMoves(c.id),tot=chantierTotal(c.id);
+  return '<button class="backlink" data-a="w-chantiers">← Mes chantiers</button>'+
+    '<h1 class="title">'+esc(c.name)+'</h1>'+
+    (c.metrage?'<p class="sub" style="margin:2px 0 14px">Métrage : '+fmtq(c.metrage)+' '+esc(c.munit)+'</p>':'<div style="height:8px"></div>')+
+    '<div class="card"><div class="big"><div><div class="l" style="font-size:12.5px;color:var(--muted)">Total du chantier</div>'+
+      '<div class="v num">'+money(tot)+'</div></div><div class="pct">'+fmtq(chantierQty(c.id))+' art.</div></div></div>'+
+    '<button class="cta" data-a="w-add" data-id="'+c.id+'">＋ Ajouter du matériel</button>'+
+    (moves.length?moves.map(m=>{const i=ctx().items.get(m.itemId),line=m.qty*(m.unitCost||0);
+      return '<div class="card flat"><div class="row"><div class="grow"><div class="ttl">'+esc(i?i.name:'—')+'</div>'+
+        '<div class="sub">'+fmtd(m.date)+' · '+fmtq(m.qty)+' × '+money(m.unitCost||0)+'</div></div>'+
+        '<div class="right"><div class="n">'+money(line)+'</div><button class="btn sm" data-a="w-editdate" data-id="'+m.id+'" style="margin-top:6px">Date</button></div></div></div>';
+    }).join('')
+    :'<div class="card"><div class="empty"><b>Chantier vide</b>Appuyez sur « Ajouter du matériel » pour commencer.</div></div>');
+}
+function wNewChantierSheet(){
+  sheet('<h2>Nouveau chantier</h2><p class="lead">Il vous appartient. Vous y ajouterez le matériel pris.</p>'+
+    '<div class="f"><label>Nom du chantier</label><input id="nc-name" placeholder="Bagneux, Rue des Lilas…" autocomplete="off" style="font-size:17px;padding:14px 16px"></div>'+
+    '<div class="grid2"><div class="f"><label>Métrage</label><input id="nc-metrage" type="number" inputmode="decimal" min="0" step="0.01" placeholder="150"></div>'+
+    '<div class="f"><label>Unité</label><select id="nc-unit"><option value="m">m</option><option value="m²">m²</option><option value="ml">ml</option></select></div></div>'+
+    '<div class="acts"><button class="btn" data-a="close">Annuler</button><button class="btn go" data-a="w-newch-save">Créer le chantier</button></div>');
+}
+function wAddSheet(cid){
+  const c=chantierById(cid);if(!c)return;
   const avail=DB.items.filter(i=>!i.archived&&onHand(i.id)>EPS).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
-  const took=state.wcart||0;
-  return '<button class="backlink" data-a="w-chantier">← Chantier : '+esc(state.wsite)+'</button>'+
-    '<h1 class="title">Que prenez-vous ?</h1>'+
-    (took>0?'<div class="wizdone">✓ '+took+' article'+(took>1?'s':'')+' pris pour ce chantier</div>':'<p class="sub" style="margin-bottom:16px">Appuyez sur un article pour le prendre.</p>')+
-    (avail.length?'<div class="mgrid">'+avail.map(i=>
-      '<div class="card pcard" data-a="w-pick" data-id="'+i.id+'">'+thumb(i)+'<div class="pin">'+
-      '<div class="ttl">'+esc(i.name)+'</div>'+
-      '<div class="sub">'+fmtq(onHand(i.id))+' '+esc(i.unit)+' dispo</div>'+
-      '<button class="btn go" style="width:100%;margin-top:9px;justify-content:center" data-a="w-pick" data-id="'+i.id+'">Prendre</button>'+
-      '</div></div>').join('')+'</div>'
-    :'<div class="card"><div class="empty"><b>Aucun matériel disponible</b>Le dépôt est vide pour le moment.</div></div>')+
-    '<button class="cta'+(took>0?'':' sec')+'" data-a="w-done" style="margin-top:16px">'+(took>0?'Terminé ✓':'Terminer sans prendre')+'</button>';
+  if(!avail.length)return toast('Aucun matériel disponible au dépôt.','bad');
+  sheet('<h2>Ajouter du matériel</h2><p class="lead">Chantier : '+esc(c.name)+'</p>'+
+    '<div class="f"><label>Date</label><input id="add-date" type="date" value="'+today()+'" max="'+today()+'" style="font-size:16px;padding:13px 16px"></div>'+
+    '<div class="f"><label>Matériel</label><select id="add-item" style="font-size:16px;padding:13px 16px">'+avail.map(i=>'<option value="'+i.id+'">'+esc(i.name)+' — '+money(i.cost||0)+'/'+esc(i.unit)+'</option>').join('')+'</select></div>'+
+    '<div class="f"><label>Quantité</label><input id="add-qty" type="number" inputmode="decimal" value="1" min="0" step="1" style="font-size:17px;padding:13px 16px"></div>'+
+    '<div id="add-info" class="hint"></div>'+
+    '<div class="acts"><button class="btn" data-a="close">Annuler</button><button class="btn go" data-a="w-add-save" data-id="'+cid+'">Ajouter</button></div>');
+  const upd=()=>{const it=ctx().items.get(val('add-item')),q=num(val('add-qty'));if(!it)return;
+    $('#add-info').innerHTML='Disponible : '+fmtq(onHand(it.id))+' '+esc(it.unit)+' · Total ligne : <b>'+money(q*(it.cost||0))+'</b>';};
+  $('#add-item').addEventListener('change',upd);$('#add-qty').addEventListener('input',upd);upd();
 }
-function wTakeSheet(itemId){
-  const it=ctx().items.get(itemId);if(!it)return;
-  sheet('<h2>'+esc(it.name)+'</h2><p class="lead">Chantier : '+esc(state.wsite)+'</p>'+
-    '<div class="f"><label>Quantité</label><input id="w-qty" type="number" inputmode="decimal" value="1" min="0" step="1" style="font-size:19px;padding:14px 16px"></div>'+
-    '<div class="hint">Disponible au dépôt : '+fmtq(onHand(itemId))+' '+esc(it.unit)+'</div>'+
+function wHistory(t){
+  const rows=DB.moves.filter(m=>m.teamId===SESSION.teamId&&m.type==='issue').sort((a,b)=>b.ts-a.ts).slice(0,200);
+  return '<button class="backlink" data-a="w-home">← Retour</button>'+
+    '<h1 class="title">Mon historique</h1>'+
+    '<p class="sub" style="margin-bottom:16px">Tout le matériel pris par votre équipe. Appuyez sur une ligne pour corriger la date.</p>'+
+    (rows.length?rows.map(m=>{const i=ctx().items.get(m.itemId);
+      return '<div class="card flat" data-a="w-editdate" data-id="'+m.id+'"><div class="row"><div class="dot out">OUT</div>'+
+      '<div class="grow"><div class="ttl">'+esc(i?i.name:'—')+' ×'+fmtq(m.qty)+'</div>'+
+      '<div class="sub">'+(m.site?esc(m.site)+' · ':'')+fmtd(m.date)+'</div></div>'+
+      '<button class="btn sm" data-a="w-editdate" data-id="'+m.id+'">Date</button></div></div>'}).join('')
+    :'<div class="card"><div class="empty"><b>Aucune sortie</b>Le matériel que vous prenez apparaîtra ici.</div></div>');
+}
+function wDateSheet(moveId){
+  const m=DB.moves.find(x=>x.id===moveId);if(!m||m.teamId!==SESSION.teamId)return;
+  const it=ctx().items.get(m.itemId);
+  sheet('<h2>Corriger la date</h2><p class="lead">'+esc(it?it.name:'—')+' × '+fmtq(m.qty)+(m.site?' · '+esc(m.site):'')+'</p>'+
+    '<div class="f"><label>Date de la sortie</label><input id="wd-date" type="date" value="'+m.date+'" max="'+today()+'" style="font-size:17px;padding:14px 16px"></div>'+
     '<div class="acts"><button class="btn" data-a="close">Annuler</button>'+
-    '<button class="btn go" data-a="w-take" data-id="'+itemId+'">Prendre</button></div>');
+    '<button class="btn go" data-a="w-date-save" data-id="'+moveId+'">Enregistrer</button></div>');
 }
 function login(){
   $('#root').innerHTML='<div class="login"><div class="in">'+
@@ -913,31 +963,42 @@ function defaultSite(teamId){
   const t=ctx().teams.get(tid); return t&&t.site?t.site:'';
 }
 function vChantiers(){
-  const list=chantierList();
-  const usage={}; DB.moves.forEach(m=>{if(m.site)usage[m.site]=(usage[m.site]||0)+(m.type==='issue'?1:0)});
-  return head(list.length+' chantier'+(list.length>1?'s':''),'Chantiers')+
-  '<div class="card"><div class="pb" style="padding:16px 18px">'+
-    '<div class="ttl" style="margin-bottom:10px">Ajouter un chantier</div>'+
-    '<div class="f"><label>Nom du chantier</label><input id="ch-name" placeholder="Rue des Lilas, ZI Nord…"></div>'+
-    '<div class="f"><label>Adresse / précision (facultatif)</label><input id="ch-addr" placeholder="ville, référence…"></div>'+
-    '<button class="cta" style="margin:4px 0 0" data-a="ch-quick">Créer le chantier</button>'+
-    '<div class="hint">Visible par toutes les équipes. Il apparaît ensuite dans le choix du chantier lors d\u2019une sortie.</div>'+
-  '</div></div>'+
-  '<div class="sec"><h2>Tous les chantiers</h2></div>'+
-  (list.length?'<div class="list">'+list.map(c=>
-    '<div class="card"><div class="row"><div class="dot big mute">'+ICO.pin+'</div>'+
+  const list=DB.chantiers.filter(c=>!c.archived).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  const C=ctx();
+  const grand=list.reduce((s,c)=>s+chantierTotal(c.id),0);
+  if(state.chOpen){const c=chantierById(state.chOpen);if(c)return chantierFolderAdmin(c);}
+  return head(list.length+' chantier'+(list.length>1?'s':'')+' · '+money(grand),'Chantiers')+
+  '<p class="sub" style="margin:-14px 0 18px">Chaque chantier appartient à une équipe et cumule son propre coût. Appuyez pour voir le détail.</p>'+
+  (list.length?'<div class="list">'+list.map(c=>{
+    const t=C.teams.get(c.teamId),tot=chantierTotal(c.id),n=chantierMoves(c.id).length;
+    return '<div class="card" data-a="ch-open" data-id="'+c.id+'"><div class="row"><div class="dot big mute">'+ICO.pin+'</div>'+
       '<div class="grow"><div class="ttl">'+esc(c.name)+'</div>'+
-      '<div class="sub">'+(c.addr?esc(c.addr)+' · ':'')+(usage[c.name]||0)+' sortie'+((usage[c.name]||0)>1?'s':'')+'</div></div></div>'+
-      (isAdmin()?'<div class="pair"><button class="btn" data-a="ch-edit" data-id="'+c.id+'">Modifier</button>'+
-        '<button class="btn" data-a="ch-arch" data-id="'+c.id+'">Archiver</button></div>':'')+
-    '</div>').join('')+'</div>'
-  :'<div class="card"><div class="empty"><b>Aucun chantier</b>Ajoutez le premier chantier ci-dessus.</div></div>');
+      '<div class="sub">'+esc(t?t.name:'—')+(c.metrage?' · '+fmtq(c.metrage)+' '+esc(c.munit):'')+' · '+n+' article'+(n>1?'s':'')+'</div></div>'+
+      '<div class="right"><div class="n">'+money(tot)+'</div></div></div></div>';
+  }).join('')+'</div>'
+  :'<div class="card"><div class="empty"><b>Aucun chantier</b>Les chantiers créés par les équipes apparaîtront ici.</div></div>');
+}
+function chantierFolderAdmin(c){
+  const C=ctx(),t=C.teams.get(c.teamId);
+  const moves=chantierMoves(c.id),tot=chantierTotal(c.id);
+  return '<button class="backlink" data-a="ch-close">← Tous les chantiers</button>'+
+    '<div class="top"><div><div class="eyebrow" style="font-size:12.5px;color:var(--muted)">'+esc(t?t.name:'—')+(c.metrage?' · '+fmtq(c.metrage)+' '+esc(c.munit):'')+'</div><h1 class="title" style="margin-bottom:0">'+esc(c.name)+'</h1></div>'+
+      '<div class="acts"><button class="btn" data-a="ch-edit" data-id="'+c.id+'">Modifier</button><button class="btn" data-a="ch-arch" data-id="'+c.id+'">Archiver</button></div></div>'+
+    '<div class="kpis" style="grid-template-columns:1fr 1fr"><div class="stat"><div class="l">Total du chantier</div><div class="v num">'+money(tot)+'</div></div>'+
+    '<div class="stat"><div class="l">Articles</div><div class="v num">'+fmtq(chantierQty(c.id))+'</div></div></div>'+
+    '<div class="panel"><div class="tw"><table class="tbl"><thead><tr><th>Date</th><th>Matériel</th><th class="r">Qté</th><th class="r">P.U.</th><th class="r">Total</th></tr></thead><tbody>'+
+    (moves.length?moves.map(m=>{const i=C.items.get(m.itemId);
+      return '<tr><td class="nowrap">'+fmtd(m.date)+'</td><td>'+esc(i?i.name:'—')+'</td><td class="r num">'+fmtq(m.qty)+'</td>'+
+      '<td class="r num">'+money(m.unitCost||0)+'</td><td class="r num">'+money(m.qty*(m.unitCost||0))+'</td></tr>'}).join('')
+    :'<tr><td colspan="5"><div class="empty">Aucun matériel sur ce chantier.</div></td></tr>')+
+    '</tbody>'+(moves.length?'<tfoot><tr><td colspan="4">Total du chantier</td><td class="r num">'+money(tot)+'</td></tr></tfoot>':'')+'</table></div></div>';
 }
 function chantierSheet(id){
   const c=DB.chantiers.find(x=>x.id===id);if(!c)return;
   sheet('<h2>Modifier le chantier</h2>'+
     '<div class="f"><label>Nom</label><input id="ch-name2" value="'+esc(c.name)+'"></div>'+
-    '<div class="f"><label>Adresse / précision</label><input id="ch-addr2" value="'+esc(c.addr||'')+'"></div>'+
+    '<div class="grid2"><div class="f"><label>Métrage</label><input id="ch-metrage2" type="number" min="0" step="0.01" value="'+(c.metrage||0)+'"></div>'+
+    '<div class="f"><label>Unité</label><select id="ch-unit2"><option value="m"'+(c.munit==='m'?' selected':'')+'>m</option><option value="m²"'+(c.munit==='m²'?' selected':'')+'>m²</option><option value="ml"'+(c.munit==='ml'?' selected':'')+'>ml</option></select></div></div>'+
     '<div class="acts"><button class="btn bad" data-a="ch-del" data-id="'+id+'">Supprimer</button>'+
     '<button class="btn go" data-a="ch-save" data-id="'+id+'">Enregistrer</button></div>');
 }
@@ -1501,12 +1562,13 @@ function doExportPDF(from,to,tid,plabel,fname){
 /* =====================================================
    ACTIONS
    ===================================================== */
-function applyMove(kind,teamId,lines,due,note,site,mdate){
+function applyMove(kind,teamId,lines,due,note,site,mdate,chantierId){
   const slip=(kind==='issue'?'BS-':'BR-')+pad(kind==='issue'?++DB.seq.bs:++DB.seq.br);
   const test=[...DB.moves];
   for(const l of lines){const it=ctx().items.get(l.itemId);if(!it)continue;
     test.push({id:uid(),slip,date:mdate||today(),ts:Date.now(),type:kind,itemId:l.itemId,teamId,qty:num(l.qty),
       unitCost:it.cost,rate:kind==='issue'?it.rate:0,due:kind==='issue'?(due||null):null,site:kind==='issue'?(site||''):'',
+      chantierId:kind==='issue'?(chantierId||null):null,
       note:kind==='return'&&l.cond==='damaged'?'Rendu endommagé':(note||'')})}
   if(!valid(compute(test))){if(kind==='issue')--DB.seq.bs;else --DB.seq.br;return null}
   DB.moves=test;return slip;
@@ -1530,22 +1592,30 @@ const A={
     '<div class="acts"><button class="btn" data-a="close">Annuler</button><button class="btn go" data-a="li-team-go">Entrer</button></div>')},
   'li-team-go':()=>{const t=ctx().teams.get(val('lt'));if(!t)return toast('Choisissez une équipe.','bad');
     if(String(t.pin||'')!==val('ltp').trim())return toast('Code incorrect.','bad');
-    close();state.wstep=0;state.wsite='';state.wcart=0;setSession({role:'team',teamId:t.id})},
-  // --- assistant équipe (simplifié) ---
+    close();state.wstep=0;state.wchantier=null;setSession({role:'team',teamId:t.id})},
+  // --- assistant équipe (chantiers-dossiers) ---
   'w-start':()=>{state.wstep=1;render()},
   'w-home':()=>{state.wstep=0;render()},
-  'w-chantier':()=>{state.wstep=1;render()},
-  'w-site-next':()=>{const name=val('w-site').trim();if(!name)return toast('Écrivez le nom du chantier.','bad');
-    state.wsite=name;ensureChantier(name);state.wcart=0;state.wstep=2;commit()},
-  'w-pick':(el,id)=>wTakeSheet(id),
-  'w-take':(el,id)=>{const it=ctx().items.get(id);if(!it)return;
-    const q=num(val('w-qty'));if(q<=0)return toast('Indiquez une quantité.','bad');
-    if(q>onHand(id)+EPS)return toast('Seulement '+fmtq(onHand(id))+' disponible au dépôt.','bad');
-    const slip=applyMove('issue',SESSION.teamId,[{itemId:id,qty:q,cond:'good'}],null,'',state.wsite,today());
+  'w-chantiers':()=>{state.wstep=1;render()},
+  'w-hist':()=>{state.wstep=3;render()},
+  'w-newch':()=>wNewChantierSheet(),
+  'w-newch-save':()=>{const name=val('nc-name').trim();if(!name)return toast('Indiquez un nom de chantier.','bad');
+    const c={id:uid(),name,addr:'',teamId:SESSION.teamId,metrage:num(val('nc-metrage')),munit:val('nc-unit')||'m',archived:false};
+    DB.chantiers.push(c);state.wchantier=c.id;state.wstep=2;close();commit();toast('Chantier « '+name+' » créé.','ok')},
+  'w-open':(el,id)=>{state.wchantier=id;state.wstep=2;render()},
+  'w-add':(el,id)=>wAddSheet(id||state.wchantier),
+  'w-add-save':(el,cid)=>{const c=chantierById(cid);if(!c)return;
+    const iid=val('add-item'),q=num(val('add-qty')),dt=val('add-date')||today();
+    if(!iid)return toast('Choisissez un matériel.','bad');
+    if(q<=0)return toast('Indiquez une quantité.','bad');
+    if(q>onHand(iid)+EPS)return toast('Seulement '+fmtq(onHand(iid))+' disponible au dépôt.','bad');
+    const slip=applyMove('issue',SESSION.teamId,[{itemId:iid,qty:q,cond:'good'}],null,'',c.name,dt,cid);
     if(!slip)return toast('Impossible d\u2019enregistrer.','bad');
-    state.wcart=(state.wcart||0)+1;close();commit();toast(esc(it.name)+' × '+fmtq(q)+' pris.','ok')},
-  'w-done':()=>{const n=state.wcart||0;const site=state.wsite;state.wstep=0;state.wsite='';state.wcart=0;render();
-    if(n>0)toast(n+' article'+(n>1?'s':'')+' enregistré'+(n>1?'s':'')+' pour '+site+'.','ok')},
+    close();commit();const it=ctx().items.get(iid);toast((it?it.name:'Matériel')+' × '+fmtq(q)+' ajouté.','ok')},
+  'w-editdate':(el,id)=>wDateSheet(id),
+  'w-date-save':(el,id)=>{const m=DB.moves.find(x=>x.id===id);if(!m||m.teamId!==SESSION.teamId)return;
+    const nd=val('wd-date');if(!nd)return toast('Choisissez une date.','bad');
+    m.date=nd;close();commit();toast('Date corrigée.','ok')},
   // mouvements
   'mv-out':(el,id)=>moveSheet('issue',id),
   'mv-in':(el,id)=>moveSheet('return',id),
@@ -1567,14 +1637,16 @@ const A={
     }
     const mdate=val('m-date')||today();
     if(kind==='issue'&&!site)return toast('Choisissez ou créez un chantier.','bad');
+    const chM=kind==='issue'?DB.chantiers.find(c=>!c.archived&&c.teamId===teamId&&c.name.toLowerCase()===site.toLowerCase()):null;
+    const chId=chM?chM.id:null;
     if(admin){
-      const slip=applyMove(kind,teamId,lines,due,note,site,mdate);
+      const slip=applyMove(kind,teamId,lines,due,note,site,mdate,chId);
       if(!slip)return toast('Mouvement impossible.','bad');
       close();commit();toast('Bon '+slip+' enregistré.','ok');bon(slip);
     }else{
       const req={id:uid(),type:kind,teamId,lines,date:today(),moveDate:mdate,ts:Date.now(),status:'pending',due,by:val('m-by').trim(),note,site};
       if(!DB.settings.requireApproval){
-        const slip=applyMove(kind,teamId,lines,due,note,site,mdate);
+        const slip=applyMove(kind,teamId,lines,due,note,site,mdate,chId);
         if(!slip)return toast('Mouvement impossible.','bad');
         req.status='approved';req.slip=slip;
       }
@@ -1634,15 +1706,13 @@ const A={
     DB.chantiers.push({id:uid(),name,addr:val('ch-addr').trim(),archived:false});
     commit();toast('Chantier « '+name+' » créé.','ok')},
   'ch-edit':(el,id)=>chantierSheet(id),
-  'ch-newsheet':()=>chNewSheet(),
-  'chn-save':()=>{const name=val('chn-name').trim();if(!name)return toast('Indiquez un nom de chantier.','bad');
-    if(chantierExists(name))return toast('Ce chantier existe déjà.','bad');
-    DB.chantiers.push({id:uid(),name,addr:val('chn-addr').trim(),archived:false});close();commit();toast('Chantier « '+name+' » créé.','ok')},
+  'ch-open':(el,id)=>{state.chOpen=id;render()},
+  'ch-close':()=>{state.chOpen=null;render()},
   'ch-save':(el,id)=>{const c=DB.chantiers.find(x=>x.id===id);if(!c)return;
     const name=val('ch-name2').trim();if(!name)return toast('Indiquez un nom.','bad');
-    c.name=name;c.addr=val('ch-addr2').trim();close();commit();toast('Chantier enregistré.','ok')},
+    c.name=name;c.metrage=num(val('ch-metrage2'));c.munit=val('ch-unit2')||'m';close();commit();toast('Chantier enregistré.','ok')},
   'ch-arch':(el,id)=>{const c=DB.chantiers.find(x=>x.id===id);if(!c)return;
-    c.archived=true;commit();toast('Chantier archivé.')},
+    c.archived=true;state.chOpen=null;commit();toast('Chantier archivé.')},
   'ch-del':(el,id)=>confirmBox('Supprimer ce chantier ? Les sorties déjà enregistrées le conservent dans leur historique.',
     ()=>{DB.chantiers=DB.chantiers.filter(x=>x.id!==id);close();commit();toast('Chantier supprimé.')},{danger:true,yes:'Supprimer'}),
   'team-save':(el,id)=>{
@@ -1723,6 +1793,10 @@ function loadSample(){
   const T=n=>Date.now()-n*86400000;
   const mv=(slip,dd,type,it,te,q,x)=>Object.assign({id:uid(),slip,date:d(dd),ts:T(dd),type,itemId:it.id,
     teamId:te?te.id:null,qty:q,unitCost:it.cost,rate:0,due:null,note:''},x||{});
+  const chLilas={id:uid(),name:'Rue des Lilas',addr:'',teamId:tN.id,metrage:120,munit:'m²',archived:false};
+  const chVille={id:uid(),name:'ZI Villeurbanne',addr:'',teamId:tS.id,metrage:340,munit:'m',archived:false};
+  const chBezons={id:uid(),name:'Bezons',addr:'',teamId:tR.id,metrage:80,munit:'ml',archived:false};
+  DB.chantiers=[chLilas,chVille,chBezons];
   DB.moves=[
     mv('REA-0001',45,'restock',meul,null,6,{note:'Stock initial'}),
     mv('REA-0002',45,'restock',perc,null,8,{note:'Stock initial'}),
@@ -1734,20 +1808,16 @@ function loadSample(){
     mv('REA-0008',45,'restock',casq,null,30,{note:'Stock initial'}),
     mv('REA-0009',45,'restock',cime,null,150,{note:'Stock initial'}),
     mv('REA-0010',45,'restock',ferb,null,800,{note:'Stock initial'}),
-    mv('BS-0001',18,'issue',beto,tN,1,{rate:18,due:d(4)}),
-    mv('BS-0001',18,'issue',meul,tN,2,{rate:4,due:d(4)}),
-    mv('BS-0002',12,'issue',echa,tS,2,{rate:9,due:d(-3)}),
-    mv('BS-0003',8,'issue',perc,tR,3,{rate:3.5,due:d(-6)}),
-    mv('BS-0003',8,'issue',mart,tR,1,{rate:12,due:d(-6)}),
-    mv('BS-0004',5,'issue',cime,tS,40,{}),
-    mv('BS-0005',1,'issue',eche,tN,1,{rate:3,due:d(-10)}),
+    mv('BS-0001',18,'issue',beto,tN,1,{rate:18,due:d(4),site:'Rue des Lilas',chantierId:chLilas.id}),
+    mv('BS-0001',18,'issue',meul,tN,2,{rate:4,due:d(4),site:'Rue des Lilas',chantierId:chLilas.id}),
+    mv('BS-0002',12,'issue',echa,tS,2,{rate:9,due:d(-3),site:'ZI Villeurbanne',chantierId:chVille.id}),
+    mv('BS-0003',8,'issue',perc,tR,3,{rate:3.5,due:d(-6),site:'Bezons',chantierId:chBezons.id}),
+    mv('BS-0003',8,'issue',mart,tR,1,{rate:12,due:d(-6),site:'Bezons',chantierId:chBezons.id}),
+    mv('BS-0004',5,'issue',cime,tS,40,{site:'ZI Villeurbanne',chantierId:chVille.id}),
+    mv('BS-0005',1,'issue',eche,tN,1,{rate:3,due:d(-10),site:'Rue des Lilas',chantierId:chLilas.id}),
     mv('BR-0001',3,'return',meul,tN,1,{note:'Une rendue'}),
     mv('AJU-0001',6,'adjust',cime,null,-8,{note:'Sacs humides au rebut'})];
   DB.seq={rea:10,bs:5,br:1};
-  DB.chantiers=[
-    {id:uid(),name:'Rue des Lilas',addr:'Lyon 3e',archived:false},
-    {id:uid(),name:'ZI Villeurbanne',addr:'Villeurbanne',archived:false},
-    {id:uid(),name:'Bezons',addr:'',archived:false}];
   DB.requests=[
     {id:uid(),type:'issue',teamId:tS.id,lines:[{itemId:gene.id,qty:1,cond:'good'}],date:today(),ts:Date.now()-5400e3,
      status:'pending',due:d(-7),by:'Claire Dubois',note:'Pas de courant sur le chantier lundi'},
@@ -1758,7 +1828,7 @@ function loadSample(){
 /* ---------- événements ---------- */
 document.addEventListener('click',e=>{
   const v=e.target.closest('[data-v]');
-  if(v){state.view=v.dataset.v;state.q='';state.limit=20;state.jteam='';state.jrange='all';state.jfrom='';state.jto='';close();render();return}
+  if(v){state.view=v.dataset.v;state.q='';state.limit=20;state.jteam='';state.jrange='all';state.jfrom='';state.jto='';state.chOpen=null;close();render();return}
   const s=e.target.closest('[data-s]');
   if(s){state.seg=s.dataset.s;render();return}
   const a=e.target.closest('[data-a]');
