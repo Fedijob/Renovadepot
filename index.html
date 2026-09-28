@@ -132,6 +132,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 /* ---------- champs ---------- */
 .f{margin-bottom:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 .f label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;font-weight:500}
 .f input,.f select,.f textarea{width:100%;padding:13px 14px;border:1px solid var(--line2);border-radius:13px;
   background:var(--card2);color:var(--text);font-size:15px}
@@ -538,17 +539,30 @@ function renderWorker(){
 function workerHeader(t){
   return '<div class="hdr"><img class="brandlogo" src="'+LOGO+'" alt="Renovaclos">'+
     '<div class="nm"><span>'+esc(t.name)+'</span></div>'+
-    '<button class="iconbtn" data-a="logout" aria-label="Se déconnecter">⎋</button></div>';
+    '<button class="btn sm" data-a="logout">Déconnexion</button></div>';
 }
 function wHome(t){
-  return '<div class="wizhome">'+
-    '<div class="wizicon">🧰</div>'+
-    '<div class="wizhi">Bonjour, '+esc(t.name)+'</div>'+
-    '<div class="wizsub">Ouvrez un chantier pour y ajouter le matériel pris.</div>'+
-    '<button class="cta cta-huge" data-a="w-start">Demander du matériel</button>'+
-    '<button class="cta sec" data-a="w-hist" style="margin-top:-14px">📋 Mon historique</button>'+
-    '<button class="btn" data-a="logout" style="margin-top:14px">Se déconnecter</button>'+
-  '</div>';
+  const list=teamChantiers(t.id);
+  const rows=DB.moves.filter(m=>m.teamId===SESSION.teamId&&m.type==='issue').sort((a,b)=>b.ts-a.ts).slice(0,200);
+  return '<div class="eyebrow" style="padding-top:4px">Bonjour, '+esc(t.name)+'</div>'+
+    '<h1 class="title" style="margin-bottom:16px">Demander du matériel</h1>'+
+    '<button class="cta cta-huge" data-a="w-newch">＋ Nouveau chantier</button>'+
+    '<div class="sec"><h2 style="font-size:16px">Mes chantiers</h2></div>'+
+    (list.length?'<div class="list">'+list.map(c=>{
+      const tot=chantierTotal(c.id),n=chantierMoves(c.id).length;
+      return '<div class="card" data-a="w-open" data-id="'+c.id+'"><div class="row"><div class="dot big mute">'+ICO.pin+'</div>'+
+        '<div class="grow"><div class="ttl">'+esc(c.name)+'</div>'+
+        '<div class="sub">'+(c.metrage?fmtq(c.metrage)+' '+esc(c.munit)+' · ':'')+n+' article'+(n>1?'s':'')+'</div></div>'+
+        '<div class="right"><div class="n">'+money(tot)+'</div></div></div></div>';
+    }).join('')+'</div>'
+    :'<div class="card"><div class="empty"><b>Aucun chantier</b>Créez-en un avec le bouton ci-dessus.</div></div>')+
+    '<div class="sec"><h2 style="font-size:16px">Mon historique</h2></div>'+
+    (rows.length?rows.map(m=>{const i=ctx().items.get(m.itemId);
+      return '<div class="card flat" data-a="w-editdate" data-id="'+m.id+'"><div class="row"><div class="dot out">OUT</div>'+
+      '<div class="grow"><div class="ttl">'+esc(i?i.name:'—')+' ×'+fmtq(m.qty)+'</div>'+
+      '<div class="sub">'+(m.site?esc(m.site)+' · ':'')+fmtd(m.date)+'</div></div>'+
+      '<button class="btn sm" data-a="w-editdate" data-id="'+m.id+'">Date</button></div></div>'}).join('')
+    :'<div class="card"><div class="empty"><b>Aucune sortie</b>Le matériel que vous prenez apparaîtra ici.</div></div>');
 }
 function wChantierList(t){
   const list=teamChantiers(t.id);
@@ -569,16 +583,17 @@ function wFolder(t){
   const c=chantierById(state.wchantier);
   if(!c){state.wstep=1;return wChantierList(t);}
   const moves=chantierMoves(c.id),tot=chantierTotal(c.id);
-  return '<button class="backlink" data-a="w-chantiers">← Mes chantiers</button>'+
+  return '<button class="backlink" data-a="w-home">← Mes chantiers</button>'+
     '<h1 class="title">'+esc(c.name)+'</h1>'+
     (c.metrage?'<p class="sub" style="margin:2px 0 14px">Métrage : '+fmtq(c.metrage)+' '+esc(c.munit)+'</p>':'<div style="height:8px"></div>')+
     '<div class="card"><div class="big"><div><div class="l" style="font-size:12.5px;color:var(--muted)">Total du chantier</div>'+
       '<div class="v num">'+money(tot)+'</div></div><div class="pct">'+fmtq(chantierQty(c.id))+' art.</div></div></div>'+
     '<button class="cta" data-a="w-add" data-id="'+c.id+'">＋ Ajouter du matériel</button>'+
+    '<button class="cta sec" data-a="ch-pdf" data-id="'+c.id+'" style="margin-top:-14px">Télécharger le PDF</button>'+
     (moves.length?moves.map(m=>{const i=ctx().items.get(m.itemId),line=m.qty*(m.unitCost||0);
       return '<div class="card flat"><div class="row"><div class="grow"><div class="ttl">'+esc(i?i.name:'—')+'</div>'+
         '<div class="sub">'+fmtd(m.date)+' · '+fmtq(m.qty)+' × '+money(m.unitCost||0)+'</div></div>'+
-        '<div class="right"><div class="n">'+money(line)+'</div><button class="btn sm" data-a="w-editdate" data-id="'+m.id+'" style="margin-top:6px">Date</button></div></div></div>';
+        '<div class="right"><div class="n">'+money(line)+'</div><button class="btn sm" data-a="w-line" data-id="'+m.id+'" style="margin-top:6px">Modifier</button></div></div></div>';
     }).join('')
     :'<div class="card"><div class="empty"><b>Chantier vide</b>Appuyez sur « Ajouter du matériel » pour commencer.</div></div>');
 }
@@ -614,6 +629,26 @@ function wHistory(t){
       '<div class="sub">'+(m.site?esc(m.site)+' · ':'')+fmtd(m.date)+'</div></div>'+
       '<button class="btn sm" data-a="w-editdate" data-id="'+m.id+'">Date</button></div></div>'}).join('')
     :'<div class="card"><div class="empty"><b>Aucune sortie</b>Le matériel que vous prenez apparaîtra ici.</div></div>');
+}
+function wLineSheet(moveId){
+  const m=DB.moves.find(x=>x.id===moveId);if(!m||m.teamId!==SESSION.teamId)return;
+  const cur=ctx().items.get(m.itemId);
+  // available items = things in stock, plus the current item (even if now 0, so it stays selectable)
+  const opts=DB.items.filter(i=>!i.archived&&(onHand(i.id)>EPS||i.id===m.itemId)).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  sheet('<h2>Modifier la ligne</h2><p class="lead">Corrigez une erreur de saisie.</p>'+
+    '<div class="f"><label>Date</label><input id="le-date" type="date" value="'+m.date+'" max="'+today()+'" style="font-size:16px;padding:13px 16px"></div>'+
+    '<div class="f"><label>Matériel</label><select id="le-item" style="font-size:16px;padding:13px 16px">'+
+      opts.map(i=>'<option value="'+i.id+'"'+(i.id===m.itemId?' selected':'')+'>'+esc(i.name)+' — '+money(i.cost||0)+'/'+esc(i.unit)+'</option>').join('')+'</select></div>'+
+    '<div class="f"><label>Quantité</label><input id="le-qty" type="number" inputmode="decimal" value="'+fmtq(m.qty)+'" min="0" step="1" style="font-size:17px;padding:13px 16px"></div>'+
+    '<div id="le-info" class="hint"></div>'+
+    '<div class="acts"><button class="btn bad" data-a="w-line-del" data-id="'+moveId+'">Supprimer</button>'+
+    '<button class="btn" data-a="close">Annuler</button>'+
+    '<button class="btn go" data-a="w-line-save" data-id="'+moveId+'">Enregistrer</button></div>');
+  const upd=()=>{const it=ctx().items.get(val('le-item')),q=num(val('le-qty'));if(!it)return;
+    // available if switching item = current onHand + (this move's qty if same item, since it will be recomputed)
+    const back=(it.id===m.itemId)?m.qty:0;
+    $('#le-info').innerHTML='Disponible : '+fmtq(onHand(it.id)+back)+' '+esc(it.unit)+' · Total ligne : <b>'+money(q*(it.cost||0))+'</b>';};
+  $('#le-item').addEventListener('change',upd);$('#le-qty').addEventListener('input',upd);upd();
 }
 function wDateSheet(moveId){
   const m=DB.moves.find(x=>x.id===moveId);if(!m||m.teamId!==SESSION.teamId)return;
@@ -982,16 +1017,19 @@ function chantierFolderAdmin(c){
   const C=ctx(),t=C.teams.get(c.teamId);
   const moves=chantierMoves(c.id),tot=chantierTotal(c.id);
   return '<button class="backlink" data-a="ch-close">← Tous les chantiers</button>'+
-    '<div class="top"><div><div class="eyebrow" style="font-size:12.5px;color:var(--muted)">'+esc(t?t.name:'—')+(c.metrage?' · '+fmtq(c.metrage)+' '+esc(c.munit):'')+'</div><h1 class="title" style="margin-bottom:0">'+esc(c.name)+'</h1></div>'+
-      '<div class="acts"><button class="btn" data-a="ch-edit" data-id="'+c.id+'">Modifier</button><button class="btn" data-a="ch-arch" data-id="'+c.id+'">Archiver</button></div></div>'+
-    '<div class="kpis" style="grid-template-columns:1fr 1fr"><div class="stat"><div class="l">Total du chantier</div><div class="v num">'+money(tot)+'</div></div>'+
+    '<div class="eyebrow">'+esc(t?t.name:'—')+(c.metrage?' · '+fmtq(c.metrage)+' '+esc(c.munit):'')+'</div>'+
+    '<h1 class="title" style="margin-bottom:14px">'+esc(c.name)+'</h1>'+
+    '<div class="stats" style="grid-template-columns:1fr 1fr;margin-bottom:12px"><div class="stat"><div class="l">Total du chantier</div><div class="v num">'+money(tot)+'</div></div>'+
     '<div class="stat"><div class="l">Articles</div><div class="v num">'+fmtq(chantierQty(c.id))+'</div></div></div>'+
-    '<div class="panel"><div class="tw"><table class="tbl"><thead><tr><th>Date</th><th>Matériel</th><th class="r">Qté</th><th class="r">P.U.</th><th class="r">Total</th></tr></thead><tbody>'+
-    (moves.length?moves.map(m=>{const i=C.items.get(m.itemId);
-      return '<tr><td class="nowrap">'+fmtd(m.date)+'</td><td>'+esc(i?i.name:'—')+'</td><td class="r num">'+fmtq(m.qty)+'</td>'+
-      '<td class="r num">'+money(m.unitCost||0)+'</td><td class="r num">'+money(m.qty*(m.unitCost||0))+'</td></tr>'}).join('')
-    :'<tr><td colspan="5"><div class="empty">Aucun matériel sur ce chantier.</div></td></tr>')+
-    '</tbody>'+(moves.length?'<tfoot><tr><td colspan="4">Total du chantier</td><td class="r num">'+money(tot)+'</td></tr></tfoot>':'')+'</table></div></div>';
+    '<div class="pair" style="margin:0 0 8px"><button class="cta" data-a="ch-pdf" data-id="'+c.id+'" style="margin:0">Télécharger le PDF</button>'+
+    '<button class="cta sec" data-a="ch-edit" data-id="'+c.id+'" style="margin:0">Modifier</button></div>'+
+    '<div class="sec"><h2 style="font-size:16px">Matériel du chantier</h2><button class="link" data-a="ch-arch" data-id="'+c.id+'">Archiver</button></div>'+
+    (moves.length?moves.map(m=>{const i=C.items.get(m.itemId),line=m.qty*(m.unitCost||0);
+      return '<div class="card flat"><div class="row"><div class="dot out">OUT</div><div class="grow"><div class="ttl">'+esc(i?i.name:'—')+'</div>'+
+      '<div class="sub">'+fmtd(m.date)+' · '+fmtq(m.qty)+' × '+money(m.unitCost||0)+'</div></div>'+
+      '<div class="right"><div class="n">'+money(line)+'</div></div></div></div>';
+    }).join('')
+    :'<div class="card"><div class="empty"><b>Chantier vide</b>Aucun matériel enregistré pour ce chantier.</div></div>');
 }
 function chantierSheet(id){
   const c=DB.chantiers.find(x=>x.id===id);if(!c)return;
@@ -1169,6 +1207,35 @@ function bon(slip){
   sheet(h+'<div class="acts"><button class="btn" data-a="close">Fermer</button>'+
     '<button class="btn" data-a="bon-pdf" data-id="'+esc(slip)+'">PDF</button>'+
     '<button class="btn go" data-a="print">Imprimer</button></div>');
+}
+function chantierPDF(cid){
+  if(!(window.jspdf&&window.jspdf.jsPDF))return toast('Générateur PDF indisponible.','bad');
+  const C=ctx(),c=chantierById(cid);if(!c)return toast('Chantier introuvable.','bad');
+  const t=C.teams.get(c.teamId), moves=chantierMoves(cid), tot=chantierTotal(cid), cur=DB.settings.currency||'€';
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'});
+  const L=15,R=195,BOT=282; let y=18;
+  const money2=v=>fmtq(Math.round(v*100)/100)+' '+cur;
+  const need=h=>{if(y+h>BOT){doc.addPage();y=18}};
+  doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20);
+  doc.text(DB.settings.company||'Dépôt',L,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(110);
+  doc.text('Relevé de chantier',R,y,{align:'right'});
+  y+=8;doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text(c.name,L,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(110);y+=5;
+  doc.text([t?t.name:'—',(c.metrage?'Métrage : '+fmtq(c.metrage)+' '+c.munit:''),'Édité le '+fmtd(today())].filter(Boolean).join('   ·   '),L,y);
+  doc.setTextColor(20);y+=6;doc.setDrawColor(215);doc.line(L,y,R,y);y+=7;
+  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(135);
+  doc.text('DATE',L,y);doc.text('MATÉRIEL',L+26,y);doc.text('QTÉ',120,y,{align:'right'});doc.text('P.U.',150,y,{align:'right'});doc.text('TOTAL',R,y,{align:'right'});
+  doc.setTextColor(20);doc.setFont('helvetica','normal');doc.setFontSize(9.5);y+=3;
+  if(!moves.length){y+=6;doc.setTextColor(120);doc.text('Aucun matériel sur ce chantier.',L,y);doc.setTextColor(20);y+=6;}
+  else moves.slice().sort((a,b)=>a.date<b.date?-1:1).forEach(m=>{const i=C.items.get(m.itemId),v=m.qty*(m.unitCost||0);
+    need(7);doc.setDrawColor(225);doc.line(L,y,R,y);y+=4;
+    doc.text(fmtd(m.date),L,y);doc.text(String((i&&i.name)||'—').slice(0,34),L+26,y);
+    doc.text(fmtq(m.qty),120,y,{align:'right'});doc.text(money2(m.unitCost||0),150,y,{align:'right'});doc.text(money2(v),R,y,{align:'right'});y+=3;});
+  doc.setDrawColor(180);doc.line(L,y,R,y);y+=6;
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('Total du chantier',L,y);doc.text(money2(tot),R,y,{align:'right'});
+  doc.save('chantier-'+slug(c.name)+'-'+today()+'.pdf');
+  toast('Relevé du chantier téléchargé.','ok');
 }
 function bonPDF(slip){
   if(!(window.jspdf&&window.jspdf.jsPDF))return toast('Générateur PDF indisponible.','bad');
@@ -1613,6 +1680,18 @@ const A={
     if(!slip)return toast('Impossible d\u2019enregistrer.','bad');
     close();commit();const it=ctx().items.get(iid);toast((it?it.name:'Matériel')+' × '+fmtq(q)+' ajouté.','ok')},
   'w-editdate':(el,id)=>wDateSheet(id),
+  'w-line':(el,id)=>wLineSheet(id),
+  'w-line-save':(el,id)=>{const m=DB.moves.find(x=>x.id===id);if(!m||m.teamId!==SESSION.teamId)return;
+    const iid=val('le-item'),q=num(val('le-qty')),dt=val('le-date')||m.date;
+    if(!iid)return toast('Choisissez un matériel.','bad');
+    if(q<=0)return toast('Indiquez une quantité.','bad');
+    const it=ctx().items.get(iid);if(!it)return;
+    const test=DB.moves.map(x=>x.id===id?Object.assign({},x,{itemId:iid,qty:q,date:dt,unitCost:it.cost,rate:it.rate}):x);
+    if(!valid(compute(test)))return toast('Quantité impossible : le stock du dépôt deviendrait négatif.','bad');
+    DB.moves=test;close();commit();toast('Ligne corrigée.','ok')},
+  'w-line-del':(el,id)=>confirmBox('Supprimer cette ligne ? Le stock du dépôt sera remis à jour.',()=>{
+    const m=DB.moves.find(x=>x.id===id);if(!m||m.teamId!==SESSION.teamId)return;
+    DB.moves=DB.moves.filter(x=>x.id!==id);close();commit();toast('Ligne supprimée.')},{danger:true,yes:'Supprimer'}),
   'w-date-save':(el,id)=>{const m=DB.moves.find(x=>x.id===id);if(!m||m.teamId!==SESSION.teamId)return;
     const nd=val('wd-date');if(!nd)return toast('Choisissez une date.','bad');
     m.date=nd;close();commit();toast('Date corrigée.','ok')},
@@ -1707,6 +1786,7 @@ const A={
     commit();toast('Chantier « '+name+' » créé.','ok')},
   'ch-edit':(el,id)=>chantierSheet(id),
   'ch-open':(el,id)=>{state.chOpen=id;render()},
+  'ch-pdf':(el,id)=>chantierPDF(id),
   'ch-close':()=>{state.chOpen=null;render()},
   'ch-save':(el,id)=>{const c=DB.chantiers.find(x=>x.id===id);if(!c)return;
     const name=val('ch-name2').trim();if(!name)return toast('Indiquez un nom.','bad');
