@@ -542,12 +542,12 @@ function workerHeader(t){
     '<button class="btn sm" data-a="logout">Déconnexion</button></div>';
 }
 function wHome(t){
-  const list=teamChantiers(t.id);
-  const rows=DB.moves.filter(m=>m.teamId===SESSION.teamId&&m.type==='issue').sort((a,b)=>b.ts-a.ts).slice(0,200);
+  const all=teamChantiers(t.id);
+  const list=all.slice().sort((a,b)=>{const ta=chantierMoves(a.id)[0],tb=chantierMoves(b.id)[0];return (tb?tb.ts:0)-(ta?ta.ts:0)}).slice(0,60);
   return '<div class="eyebrow" style="padding-top:4px">Bonjour, '+esc(t.name)+'</div>'+
     '<h1 class="title" style="margin-bottom:16px">Demander du matériel</h1>'+
     '<button class="cta cta-huge" data-a="w-newch">＋ Nouveau chantier</button>'+
-    '<div class="sec"><h2 style="font-size:16px">Mes chantiers</h2></div>'+
+    '<div class="sec"><h2 style="font-size:16px">Mes chantiers</h2>'+(all.length>60?'<span class="muted" style="font-size:12.5px">60 plus récents</span>':'')+'</div>'+
     (list.length?'<div class="list">'+list.map(c=>{
       const tot=chantierTotal(c.id),n=chantierMoves(c.id).length;
       return '<div class="card" data-a="w-open" data-id="'+c.id+'"><div class="row"><div class="dot big mute">'+ICO.pin+'</div>'+
@@ -555,14 +555,7 @@ function wHome(t){
         '<div class="sub">'+(c.metrage?fmtq(c.metrage)+' '+esc(c.munit)+' · ':'')+n+' article'+(n>1?'s':'')+'</div></div>'+
         '<div class="right"><div class="n">'+money(tot)+'</div></div></div></div>';
     }).join('')+'</div>'
-    :'<div class="card"><div class="empty"><b>Aucun chantier</b>Créez-en un avec le bouton ci-dessus.</div></div>')+
-    '<div class="sec"><h2 style="font-size:16px">Mon historique</h2></div>'+
-    (rows.length?rows.map(m=>{const i=ctx().items.get(m.itemId);
-      return '<div class="card flat" data-a="w-editdate" data-id="'+m.id+'"><div class="row"><div class="dot out">OUT</div>'+
-      '<div class="grow"><div class="ttl">'+esc(i?i.name:'—')+' ×'+fmtq(m.qty)+'</div>'+
-      '<div class="sub">'+(m.site?esc(m.site)+' · ':'')+fmtd(m.date)+'</div></div>'+
-      '<button class="btn sm" data-a="w-editdate" data-id="'+m.id+'">Date</button></div></div>'}).join('')
-    :'<div class="card"><div class="empty"><b>Aucune sortie</b>Le matériel que vous prenez apparaîtra ici.</div></div>');
+    :'<div class="card"><div class="empty"><b>Aucun chantier</b>Créez-en un avec le bouton ci-dessus.</div></div>');
 }
 function wChantierList(t){
   const list=teamChantiers(t.id);
