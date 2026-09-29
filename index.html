@@ -527,6 +527,8 @@ function render(){
 function teamChantiers(teamId){return DB.chantiers.filter(c=>!c.archived&&c.teamId===teamId).sort((a,b)=>a.name.localeCompare(b.name,'fr'))}
 function chantierById(cid){return DB.chantiers.find(c=>c.id===cid)}
 function chantierMoves(cid){return DB.moves.filter(m=>m.type==='issue'&&m.chantierId===cid).sort((a,b)=>b.ts-a.ts)}
+function chantierLive(cid){return !cid||DB.chantiers.some(c=>c.id===cid&&!c.archived)}
+function moveVisible(m){return chantierLive(m.chantierId)}
 function chantierTotal(cid){return chantierMoves(cid).reduce((s,m)=>s+m.qty*(m.unitCost||0),0)}
 function chantierQty(cid){return chantierMoves(cid).reduce((s,m)=>s+m.qty,0)}
 function renderWorker(){
@@ -655,8 +657,8 @@ function login(){
   $('#root').innerHTML='<div class="login"><div class="in">'+
     '<img class="loginlogo" src="'+LOGO+'" alt="Renovaclos">'+
     '<h1>Registre de dépôt</h1><p>Contrôle du matériel. Choisissez votre espace.</p>'+
-    '<button class="pick" data-a="li-admin"><span class="ic">🔑</span><span><b>Responsable du dépôt</b><span>Valider les sorties et retours, gérer le stock</span></span></button>'+
-    '<button class="pick" data-a="li-team"><span class="ic">👷</span><span><b>Équipe de chantier</b><span>Voir mon matériel, emprunter, rendre</span></span></button>'+
+    '<button class="pick" data-a="li-admin"><span class="ic">🔑</span><span><b>Responsable du dépôt</b><span>Gérer le stock, les chantiers et les relevés</span></span></button>'+
+    '<button class="pick" data-a="li-team"><span class="ic">👷</span><span><b>Équipe de chantier</b><span>Prendre du matériel pour vos chantiers</span></span></button>'+
     (DB.teams.length?'':'<p class="hint">Aucune équipe configurée. Connectez-vous en responsable — code par défaut&nbsp;: 1234.</p>')+
   '</div></div>';
 }
@@ -699,7 +701,7 @@ function aHome(){
   const totVal=DB.items.reduce((s,i)=>s+owned(i)*(i.cost||0),0);
   const inVal=totVal-outVal;
   const low=DB.items.filter(i=>!i.archived&&i.min>0&&onHand(i.id)<i.min).length;
-  const od=overdue(), p=pend();
+  const p=pend();
   const recent=[...DB.moves].sort((a,b)=>b.ts-a.ts).slice(0,4);
   const pctIn=totVal>0?Math.round(inVal/totVal*100):100;
   const mFrom=today().slice(0,7)+'-01';
@@ -725,12 +727,6 @@ function aHome(){
   '<button class="cta" data-a="mv-out">Enregistrer une sortie →</button>'+
   (p.length?'<div class="sec"><h2>À valider</h2><button class="link" data-v="reqs">Tout voir</button></div>'+
     p.slice(0,2).map(reqCard).join(''):'')+
-  (od.length?'<div class="sec"><h2>Retards</h2><span class="tag red">'+od.length+'</span></div>'+
-    od.slice(0,3).map(o=>{const t=C.teams.get(o.teamId),i=C.items.get(o.itemId);
-      return '<div class="card flat"><div class="row"><div class="dot out">'+o.late+'j</div>'+
-      '<div class="grow"><div class="ttl">'+esc(i?i.name:'—')+' ×'+fmtq(o.qty)+'</div>'+
-      '<div class="sub">'+esc(t?t.name:'—')+' · à rendre le '+fmtd(o.due)+'</div></div>'+
-      '<button class="btn sm" data-a="team-open" data-id="'+o.teamId+'">Voir</button></div></div>'}).join(''):'')+
   '</div><div>'+
   '<div class="sec"><h2>Mouvements récents</h2><button class="link" data-v="log">Tout voir</button></div>'+
   (recent.length?recent.map(mvRow).join(''):'<div class="card"><div class="empty">Aucun mouvement.</div></div>')+
@@ -785,8 +781,7 @@ function aStock(){
       '<div class="ttl">'+esc(i.name)+'</div>'+
       '<div class="sub">'+esc(i.cat||'Sans catégorie')+' · '+money(i.cost||0)+'</div>'+
       '<div class="row" style="margin-top:9px"><div class="grow"><div class="n'+(oh<=0?' zero':'')+'" style="font-size:19px'+(low?';color:var(--amber)':'')+'">'+fmtq(oh)+'</div><div class="u">dispo'+(out?' · '+fmtq(out)+' sorti':'')+'</div></div></div>'+
-      '<div class="pair"><button class="btn go" data-a="mv-out" data-id="'+i.id+'"'+(oh<=0?' disabled':'')+'>Sortir</button>'+
-      '<button class="btn" data-a="mv-in" data-id="'+i.id+'"'+(out<=0?' disabled':'')+'>Rendre</button></div>'+
+      '<button class="btn go" data-a="mv-out" data-id="'+i.id+'"'+(oh<=0?' disabled':'')+' style="width:100%;justify-content:center">Sortir</button>'+
       '<div class="row" style="margin-top:10px"><button class="link" data-a="item-edit" data-id="'+i.id+'">Modifier</button>'+
       '<div class="grow"></div><button class="link" data-a="adjust" data-id="'+i.id+'">Réappro.</button></div></div></div>'}).join('')
   :'<div class="card" style="grid-column:1/-1"><div class="empty"><b>Aucun article</b>'+(state.q?'Rien ne correspond à cette recherche.':'Ajoutez le premier article du dépôt.')+'</div></div>')+'</div>'+
@@ -832,7 +827,7 @@ function aLog(){
   else{[jf,jto]=rangeFromPreset(range);}
   let rows=[...DB.moves];
   if(state.seg==='out')rows=rows.filter(m=>m.type==='issue');
-  if(state.seg==='in')rows=rows.filter(m=>m.type==='return');
+  if(state.seg==='restock')rows=rows.filter(m=>m.type==='restock'||m.type==='adjust');
   if(jt)rows=rows.filter(m=>m.teamId===jt);
   if(jf)rows=rows.filter(m=>m.date>=jf);
   if(jto)rows=rows.filter(m=>m.date<=jto);
@@ -854,7 +849,7 @@ function aLog(){
   (range==='custom'?'<div class="daterow"><span class="dl">Du</span><input type="date" data-jf="jfrom" value="'+esc(jf)+'" max="'+today()+'"><span class="dl">au</span><input type="date" data-jf="jto" value="'+esc(jto)+'" max="'+today()+'"></div>':'')+
   '<div class="seg"><button data-s="all"'+(state.seg==='all'?' class="on"':'')+'>Tout</button>'+
   '<button data-s="out"'+(state.seg==='out'?' class="on"':'')+'>Sorties</button>'+
-  '<button data-s="in"'+(state.seg==='in'?' class="on"':'')+'>Retours</button></div>'+
+  '<button data-s="restock"'+(state.seg==='restock'?' class="on"':'')+'>Réappro.</button></div>'+
   (active?'<div class="sub" style="margin:-6px 0 12px">'+rows.length+' résultat'+(rows.length>1?'s':'')+'</div>':'')+
   (shown.length?shown.map(m=>{
     const i=C.items.get(m.itemId),t=C.teams.get(m.teamId),ty=TYPE[m.type];
@@ -1148,10 +1143,8 @@ function teamSheet(id){
 function teamDetail(id){
   const C=ctx(),t=C.teams.get(id);if(!t)return close();
   const h=heldOf(id), v=h.reduce((s,l)=>s+l.qty*((C.items.get(l.itemId)||{}).cost||0),0);
-  const frais=charges('','',id).reduce((s,r)=>s+r.amount,0);
   sheet('<h2>'+esc(t.name)+'</h2><p class="lead">'+[t.leader,t.phone,t.site].filter(Boolean).map(esc).join(' · ')+' · code '+esc(t.pin||'—')+'</p>'+
-  '<div class="stats"><div class="stat"><div class="l">Valeur sortie</div><div class="v num" style="font-size:24px">'+money(v)+'</div></div>'+
-  '<div class="stat"><div class="l">Frais cumulés</div><div class="v num" style="font-size:24px">'+money(frais)+'</div></div></div>'+
+  '<div class="stats" style="grid-template-columns:1fr"><div class="stat"><div class="l">Valeur sortie</div><div class="v num" style="font-size:24px">'+money(v)+'</div></div></div>'+
   (h.length?h.map(l=>{const i=C.items.get(l.itemId),d=dueFor(id,l.itemId),late=d&&d<today();
     return '<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)"><div class="grow">'+
     '<div class="ttl">'+esc(i?i.name:'—')+'</div><div class="sub">'+(d?'à rendre le '+fmtd(d):'sans échéance')+'</div></div>'+
@@ -1408,7 +1401,7 @@ function teamMonthRows(teamId,from,to,plabel){
   rows.push([]);
 
   const HDR=['Date','Bon','Article','Catégorie','Chantier','Quantité','Unité','Valeur unitaire','Valeur totale','Retour prévu'];
-  const outs=DB.moves.filter(m=>m.teamId===teamId&&m.type==='issue'&&m.date>=from&&m.date<=to)
+  const outs=DB.moves.filter(m=>m.teamId===teamId&&m.type==='issue'&&m.date>=from&&m.date<=to&&moveVisible(m))
     .sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.ts-b.ts);
   rows.push([XT('MATÉRIEL PRIS DANS LE MOIS',6)]);
   const HDR2=['Date','Bon','Article','Catégorie','Quantité','Unité','Valeur unitaire','Valeur totale','Retour prévu'];
@@ -1453,17 +1446,6 @@ function teamMonthRows(teamId,from,to,plabel){
       XT(d?fmtd(d):'—'),late?XN(late,4):XT('')])});
   if(!still.length)rows.push([XT('Tout est rentré au dépôt')]);
   else rows.push([XT('Total',6),null,null,null,null,XN(tS,5)]);
-
-  const fr=charges(from,to,teamId);
-  if(fr.length){
-    rows.push([]);
-    rows.push([XT('FRAIS DE LOCATION DU MOIS',6)]);
-    rows.push(['Date','Article','Calcul','Montant'].map(h=>XT(h,2)));
-    let tF=0;
-    fr.sort((a,b)=>a.date<b.date?-1:1).forEach(r=>{const i=C.items.get(r.itemId)||{};tF+=r.amount;
-      rows.push([XT(fmtd(r.date)+(r.open?' (en cours)':'')),XT(i.name||'—'),XT(r.detail),XN(r.amount,3)])});
-    rows.push([XT('Total',6),null,null,XN(tF,5)]);
-  }
   return rows;
 }
 /* ---- feuille de synthèse ---- */
@@ -1473,7 +1455,7 @@ function synthRows(teams,from,to,plabel){
   rows.push([XT('Synthèse — '+plabel,6)]);
   rows.push([XT('Période',6),XT(fmtd(from)+(from!==to?' au '+fmtd(to):''))]);
   rows.push([]);
-  const allOuts=DB.moves.filter(m=>m.type==='issue'&&m.date>=from&&m.date<=to);
+  const allOuts=DB.moves.filter(m=>m.type==='issue'&&m.date>=from&&m.date<=to&&moveVisible(m));
   const tQty=allOuts.reduce((s,m)=>s+m.qty,0);
   const tVal=allOuts.reduce((s,m)=>s+m.qty*(m.unitCost||0),0);
   rows.push([XT('TOTAUX DU DÉPÔT SUR LA PÉRIODE',6)]);
@@ -1481,25 +1463,24 @@ function synthRows(teams,from,to,plabel){
   rows.push([XT('Valeur totale prise',6),XN(tVal,5)]);
   rows.push([]);
   rows.push(['Équipe','Chef d\u2019équipe','Chantier','Qté prise','Sorties (lignes)','Valeur prise',
-    'Retours (lignes)','Valeur rendue','Encore détenu','Frais de location'].map(h=>XT(h,2)));
-  let qy=0,a=0,b=0,c=0,f=0;
+    'Retours (lignes)','Valeur rendue','Encore détenu'].map(h=>XT(h,2)));
+  let qy=0,a=0,b=0,c=0;
   teams.forEach(t=>{
-    const outs=DB.moves.filter(m=>m.teamId===t.id&&m.type==='issue'&&m.date>=from&&m.date<=to);
+    const outs=DB.moves.filter(m=>m.teamId===t.id&&m.type==='issue'&&m.date>=from&&m.date<=to&&moveVisible(m));
     const rets=DB.moves.filter(m=>m.teamId===t.id&&m.type==='return'&&m.date>=from&&m.date<=to);
     const qo=outs.reduce((s,m)=>s+m.qty,0);
     const vo=outs.reduce((s,m)=>s+m.qty*(m.unitCost||0),0);
     const vr=rets.reduce((s,m)=>s+m.qty*(m.unitCost||0),0);
     const vs=heldAsOf(t.id,to).reduce((s,l)=>s+l.qty*((C.items.get(l.itemId)||{}).cost||0),0);
-    const vf=charges(from,to,t.id).reduce((s,r)=>s+r.amount,0);
-    qy+=qo;a+=vo;b+=vr;c+=vs;f+=vf;
+    qy+=qo;a+=vo;b+=vr;c+=vs;
     rows.push([XT(t.name),XT(t.leader||''),XT(t.site||''),XN(qo,4),XN(outs.length,4),XN(vo,3),
-      XN(rets.length,4),XN(vr,3),XN(vs,3),XN(vf,3)]);
+      XN(rets.length,4),XN(vr,3),XN(vs,3)]);
   });
-  rows.push([XT('Total',6),null,null,XN(qy,5),null,XN(a,5),null,XN(b,5),XN(c,5),XN(f,5)]);
+  rows.push([XT('Total',6),null,null,XN(qy,5),null,XN(a,5),null,XN(b,5),XN(c,5)]);
   return rows;
 }
 const COLS_T=[13,12,30,18,16,11,9,15,15,14];
-const COLS_S=[24,20,22,12,14,15,14,15,15,15];
+const COLS_S=[24,20,22,12,14,15,14,15,15];
 let XP={mode:'month',team:''};
 function exportSheet(teamId){
   const ts=DB.teams.filter(t=>!t.archived);
@@ -1547,7 +1528,7 @@ function doExportPDF(from,to,tid,plabel,fname){
   const money2=v=>fmtq(Math.round(v*100)/100)+' '+cur;
   let firstPage=true;
   if(!tid){
-    const allOuts=DB.moves.filter(m=>m.type==='issue'&&m.date>=from&&m.date<=to);
+    const allOuts=DB.moves.filter(m=>m.type==='issue'&&m.date>=from&&m.date<=to&&moveVisible(m));
     const tQty=allOuts.reduce((s,m)=>s+m.qty,0);
     const tVal=allOuts.reduce((s,m)=>s+m.qty*(m.unitCost||0),0);
     y=18; doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(14);
@@ -1576,7 +1557,7 @@ function doExportPDF(from,to,tid,plabel,fname){
     doc.text([team.leader,team.site,'Édité le '+fmtd(today())].filter(Boolean).join('   ·   '),L,y);
     doc.setTextColor(20);y+=6;line();y+=7;
     // ---- matériel pris, groupé par chantier ----
-    const outs=DB.moves.filter(m=>m.teamId===team.id&&m.type==='issue'&&m.date>=from&&m.date<=to).sort((a,b)=>a.date<b.date?-1:1);
+    const outs=DB.moves.filter(m=>m.teamId===team.id&&m.type==='issue'&&m.date>=from&&m.date<=to&&moveVisible(m)).sort((a,b)=>a.date<b.date?-1:1);
     doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('Matériel pris',L,y);y+=6;
     if(!outs.length){doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(120);doc.text('Aucune sortie sur la période.',L,y);doc.setTextColor(20);y+=7;}
     else{
@@ -1606,14 +1587,6 @@ function doExportPDF(from,to,tid,plabel,fname){
       held.forEach(l=>{const i=C.items.get(l.itemId)||{},v=l.qty*(i.cost||0);ht+=v;need(7);line();y+=4;
         doc.text(String(i.name||'—').slice(0,46),L,y);doc.text(fmtq(l.qty)+' '+(i.unit||''),150,y,{align:'right'});doc.text(money2(v),R,y,{align:'right'});y+=3});
       line();y+=4;doc.setFont('helvetica','bold');doc.text('Total engagé',L,y);doc.text(money2(ht),R,y,{align:'right'});doc.setFont('helvetica','normal');y+=9;}
-    // ---- frais de location ----
-    const fr=charges(from,to,team.id);
-    if(fr.length){need(14);doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('Frais de location',L,y);y+=6;
-      let ft=0;doc.setFont('helvetica','normal');doc.setFontSize(9.5);
-      fr.sort((a,b)=>a.date<b.date?-1:1).forEach(r=>{const i=C.items.get(r.itemId)||{};ft+=r.amount;need(7);line();y+=4;
-        doc.text(fmtd(r.date),L,y);doc.text(String(i.name||'—').slice(0,26),L+20,y);doc.setTextColor(120);doc.text(String(r.detail).slice(0,26),110,y);doc.setTextColor(20);
-        doc.text(money2(r.amount),R,y,{align:'right'});y+=3});
-      line();y+=4;doc.setFont('helvetica','bold');doc.text('Total frais',L,y);doc.text(money2(ft),R,y,{align:'right'});doc.setFont('helvetica','normal');y+=6;}
   });
   doc.save('releve-'+(tid?slug(ts[0].name):'toutes-equipes')+'-'+fname+'.pdf');
   toast('Relevé PDF téléchargé.','ok');
