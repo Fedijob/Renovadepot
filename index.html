@@ -515,13 +515,13 @@ function saveFile(n,c,t){const b=new Blob(['\ufeff'+c],{type:t||'text/csv;charse
 /* =====================================================
    RENDU
    ===================================================== */
-const ADMIN=['home','stock','teams','chantiers','log','reqs'], TEAM=['home','stock','chantiers','reqs','log'];
+const ADMIN=['home','stock','teams','chantiers','log'], TEAM=['home','stock','chantiers','log'];
 function render(){
   if(!SESSION)return login();
   if(!isAdmin())return renderWorker();
   const allowed=ADMIN;
   if(allowed.indexOf(state.view)<0)state.view='home';
-  const body=({home:aHome,stock:aStock,teams:aTeams,chantiers:vChantiers,log:aLog,reqs:aReqs}[state.view])();
+  const body=({home:aHome,stock:aStock,teams:aTeams,chantiers:vChantiers,log:aLog}[state.view])();
   $('#root').innerHTML='<div class="wrap">'+header()+body+'</div>'+tabs();
 }
 function teamChantiers(teamId){return DB.chantiers.filter(c=>!c.archived&&c.teamId===teamId).sort((a,b)=>a.name.localeCompare(b.name,'fr'))}
@@ -671,8 +671,8 @@ function header(){
 }
 function tabs(){
   const def=isAdmin()
-    ?[['home',ICO.home,'Accueil',0],['stock',ICO.box,'Stock',0],['teams',ICO.team,'Équipes',0],['chantiers',ICO.pin,'Chantiers',0],['log',ICO.log,'Journal',0],['reqs',ICO.check,'Demandes',pend().length]]
-    :[['home',ICO.home,'Accueil',0],['stock',ICO.box,'Emprunter',0],['chantiers',ICO.pin,'Chantiers',0],['reqs',ICO.clock,'Demandes',pend(SESSION.teamId).length],['log',ICO.log,'Historique',0]];
+    ?[['home',ICO.home,'Accueil',0],['stock',ICO.box,'Stock',0],['teams',ICO.team,'Équipes',0],['chantiers',ICO.pin,'Chantiers',0],['log',ICO.log,'Journal',0]]
+    :[['home',ICO.home,'Accueil',0],['stock',ICO.box,'Emprunter',0],['chantiers',ICO.pin,'Chantiers',0],['log',ICO.log,'Historique',0]];
   return '<div class="tabs"><div class="in">'+def.map(([v,ic,l,c])=>
     '<button data-v="'+v+'"'+(state.view===v?' class="on"':'')+'>'+ic+'<span>'+l+'</span>'+
     (c?'<span class="bdg">'+c+'</span>':'')+'</button>').join('')+
@@ -701,7 +701,6 @@ function aHome(){
   const totVal=DB.items.reduce((s,i)=>s+owned(i)*(i.cost||0),0);
   const inVal=totVal-outVal;
   const low=DB.items.filter(i=>!i.archived&&i.min>0&&onHand(i.id)<i.min).length;
-  const p=pend();
   const recent=[...DB.moves].sort((a,b)=>b.ts-a.ts).slice(0,4);
   const pctIn=totVal>0?Math.round(inVal/totVal*100):100;
   const mFrom=today().slice(0,7)+'-01';
@@ -725,8 +724,6 @@ function aHome(){
     '<div class="track"><i style="width:'+pctIn+'%"></i></div>'+
     '<div class="hint">'+money(outVal)+' sont actuellement sur les chantiers.</div></div>'+
   '<button class="cta" data-a="mv-out">Enregistrer une sortie →</button>'+
-  (p.length?'<div class="sec"><h2>À valider</h2><button class="link" data-v="reqs">Tout voir</button></div>'+
-    p.slice(0,2).map(reqCard).join(''):'')+
   '</div><div>'+
   '<div class="sec"><h2>Mouvements récents</h2><button class="link" data-v="log">Tout voir</button></div>'+
   (recent.length?recent.map(mvRow).join(''):'<div class="card"><div class="empty">Aucun mouvement.</div></div>')+
@@ -734,11 +731,10 @@ function aHome(){
   '<div class="card">'+(teamsA.length?teamsA.map(t=>{
     const h=heldOf(t.id), v=h.reduce((s,l)=>s+l.qty*((C.items.get(l.itemId)||{}).cost||0),0);
     const w=outVal>0?Math.max(3,Math.round(v/outVal*100)):0;
-    const late=h.some(l=>{const d=dueFor(t.id,l.itemId);return d&&d<today()});
     return '<div style="margin-bottom:14px" data-a="team-open" data-id="'+t.id+'">'+
       '<div class="row" style="margin-bottom:7px"><div class="grow ttl">'+esc(t.name)+'</div>'+
       '<div class="ago">'+(h.length?h.length+' article'+(h.length>1?'s':''):'rien')+'</div></div>'+
-      '<div class="track'+(late?' red':'')+'"><i style="width:'+w+'%"></i></div></div>'}).join('')
+      '<div class="track"><i style="width:'+w+'%"></i></div></div>'}).join('')
     :'<div class="empty">Aucune équipe.</div>')+'</div>'+
   '</div></div>';
 }
@@ -800,11 +796,9 @@ function aTeams(){
   '<div class="sec"><h2>Tous les comptes</h2><button class="link" data-a="xls-open">Télécharger un relevé (Excel / PDF)</button></div>'+
   '<div class="list">'+(rows.length?rows.map(t=>{
     const h=heldOf(t.id), v=h.reduce((s,l)=>s+l.qty*((C.items.get(l.itemId)||{}).cost||0),0);
-    const late=h.filter(l=>{const d=dueFor(t.id,l.itemId);return d&&d<today()}).length;
     return '<div class="card"><div class="row"><div class="dot big mute">'+initial(t.name)+'</div>'+
       '<div class="grow"><div class="ttl">'+esc(t.name)+'</div>'+
-      '<div class="sub">'+(h.length?h.length+' article'+(h.length>1?'s':'')+' · '+money(v):'rien sorti')+(late?' · ':'')+'</div></div>'+
-      (late?'<span class="tag red">'+late+' en retard</span>':'')+'</div>'+
+      '<div class="sub">'+(h.length?h.length+' article'+(h.length>1?'s':'')+' · '+money(v):'rien sorti')+'</div></div></div>'+
       '<div class="pair"><button class="btn" data-a="team-open" data-id="'+t.id+'">Détail</button>'+
       '<button class="btn" data-a="team-edit" data-id="'+t.id+'">Modifier</button></div>'+'<div class="row" style="margin-top:11px"><button class="link" data-a="xls-open" data-id="'+t.id+'">Télécharger un relevé</button>'+'<div class="grow"></div><button class="link" data-a="xls-open" data-id="'+t.id+'">Excel / PDF · jour ou mois</button></div></div>'}).join('')
   :'<div class="card"><div class="empty">Aucune équipe pour l\u2019instant.</div></div>')+'</div>';
@@ -1145,12 +1139,11 @@ function teamDetail(id){
   const h=heldOf(id), v=h.reduce((s,l)=>s+l.qty*((C.items.get(l.itemId)||{}).cost||0),0);
   sheet('<h2>'+esc(t.name)+'</h2><p class="lead">'+[t.leader,t.phone,t.site].filter(Boolean).map(esc).join(' · ')+' · code '+esc(t.pin||'—')+'</p>'+
   '<div class="stats" style="grid-template-columns:1fr"><div class="stat"><div class="l">Valeur sortie</div><div class="v num" style="font-size:24px">'+money(v)+'</div></div></div>'+
-  (h.length?h.map(l=>{const i=C.items.get(l.itemId),d=dueFor(id,l.itemId),late=d&&d<today();
+  (h.length?h.map(l=>{const i=C.items.get(l.itemId);
     return '<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)"><div class="grow">'+
-    '<div class="ttl">'+esc(i?i.name:'—')+'</div><div class="sub">'+(d?'à rendre le '+fmtd(d):'sans échéance')+'</div></div>'+
-    (late?'<span class="tag red">'+days(d,today())+' j</span>':'')+
+    '<div class="ttl">'+esc(i?i.name:'—')+'</div><div class="sub">'+esc(i?i.cat:'')+'</div></div>'+
     '<div class="right"><div class="n">'+fmtq(l.qty)+'</div></div></div>'}).join('')
-  :'<div class="empty">Tout est rentré.</div>')+
+  :'<div class="empty">Rien de sorti.</div>')+
   '<div class="acts"><button class="btn" data-a="team-newcode" data-id="'+id+'">Nouveau code</button>'+
   '<button class="btn" data-a="xls-open" data-id="'+id+'">Télécharger un relevé</button>'+
   '<button class="btn go" data-a="mv-out">Nouvelle sortie</button></div>');
@@ -1161,11 +1154,7 @@ function menuSheet(){
    ?'<div class="f"><label>Nom du dépôt</label><input id="st-company" value="'+esc(DB.settings.company)+'"></div>'+
     '<div class="f2"><div class="f"><label>Devise</label><input id="st-cur" value="'+esc(DB.settings.currency)+'"></div>'+
     '<div class="f"><label>Code responsable</label><input id="st-pin" inputmode="numeric" maxlength="8" value="'+esc(DB.settings.adminPin)+'"></div></div>'+
-    '<div class="f2"><div class="f"><label>Jours de franchise</label><input id="st-grace" type="number" value="'+DB.settings.grace+'"></div>'+
-    '<div class="f"><label>Séparateur CSV</label><select id="st-sep"><option value=";"'+(DB.settings.sep===';'?' selected':'')+'>; (Excel FR)</option><option value=","'+(DB.settings.sep===','?' selected':'')+'>,</option></select></div></div>'+
-    '<div class="f"><label>Déclarations des équipes</label><select id="st-appr">'+
-      '<option value="1"'+(DB.settings.requireApproval?' selected':'')+'>À valider par le responsable</option>'+
-      '<option value="0"'+(!DB.settings.requireApproval?' selected':'')+'>Appliquées directement</option></select></div>'+
+    '<div class="f"><label>Séparateur CSV</label><select id="st-sep"><option value=";"'+(DB.settings.sep===';'?' selected':'')+'>; (Excel FR)</option><option value=","'+(DB.settings.sep===','?' selected':'')+'>,</option></select></div>'+
     '<button class="cta" style="margin:4px 0 16px" data-a="set-save">Enregistrer</button>'+
     '<div class="pair"><button class="btn go" data-a="xls-open">Télécharger un relevé</button><button class="btn" data-a="csv-inv">Export inventaire</button></div>'+'<div class="pair"><button class="btn" data-a="csv-backup">Sauvegarde</button><button class="btn" data-a="csv-ledger">Export journal</button></div>'+
     '<div class="pair"><button class="btn" data-a="restore">Restaurer</button><button class="btn" data-a="theme">Clair / sombre</button></div>'+
@@ -1695,7 +1684,7 @@ const A={
         if(!slip)return toast('Mouvement impossible.','bad');
         req.status='approved';req.slip=slip;
       }
-      DB.requests.push(req);close();state.view=DB.settings.requireApproval?'reqs':'mine';commit();
+      DB.requests.push(req);close();state.view='home';commit();
       toast(DB.settings.requireApproval?'Envoyé au responsable.':'Enregistré.','ok');
     }
   },
@@ -1804,9 +1793,9 @@ const A={
   restore:()=>$('#imp').click(),
   'set-save':()=>{const s=DB.settings;
     s.company=val('st-company').trim()||'Dépôt';s.currency=val('st-cur').trim()||'€';
-    s.grace=Math.max(0,Math.round(num(val('st-grace'))));s.sep=val('st-sep');
+    s.sep=val('st-sep');
     const p=val('st-pin').trim();if(!/^\d{4,8}$/.test(p))return toast('Le code doit contenir 4 à 8 chiffres.','bad');
-    s.adminPin=p;s.requireApproval=val('st-appr')==='1';close();commit();toast('Paramètres enregistrés.','ok')},
+    s.adminPin=p;close();commit();toast('Paramètres enregistrés.','ok')},
   sample:()=>{if(DB.items.length||DB.teams.length)return;loadSample();state.view='home';save();render();toast('Exemple chargé.','ok')},
   erase:()=>confirmBox('Supprime définitivement articles, équipes, mouvements et demandes.',
     ()=>{const s=DB.settings;DB=defaults();DB.settings=s;state.view='home';close();commit();toast('Données effacées.')},
