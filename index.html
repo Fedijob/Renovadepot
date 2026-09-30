@@ -769,6 +769,7 @@ function aStock(){
     .sort((a,b)=>a.name.localeCompare(b.name,'fr'));
   const totVal=DB.items.reduce((s,i)=>s+owned(i)*(i.cost||0),0);
   return head(DB.items.filter(i=>!i.archived).length+' articles · '+money(totVal),'Inventaire')+
+  '<button class="cta" data-a="item-new" style="margin-top:0">＋ Ajouter un article</button>'+
   '<input class="search" placeholder="Rechercher un article…" data-q value="'+esc(state.q)+'">'+
   '<div class="mgrid">'+
   (rows.length?rows.map(i=>{
@@ -780,8 +781,7 @@ function aStock(){
       '<button class="btn go" data-a="mv-out" data-id="'+i.id+'" style="width:100%;justify-content:center">Sortir</button>'+
       '<div class="row" style="margin-top:10px"><button class="link" data-a="item-edit" data-id="'+i.id+'">Modifier</button>'+
       '<div class="grow"></div><button class="link" data-a="adjust" data-id="'+i.id+'">Réappro.</button></div></div></div>'}).join('')
-  :'<div class="card" style="grid-column:1/-1"><div class="empty"><b>Aucun article</b>'+(state.q?'Rien ne correspond à cette recherche.':'Ajoutez le premier article du dépôt.')+'</div></div>')+'</div>'+
-  '<button class="cta sec" data-a="item-new">Ajouter un article</button>';
+  :'<div class="card" style="grid-column:1/-1"><div class="empty"><b>Aucun article</b>'+(state.q?'Rien ne correspond à cette recherche.':'Ajoutez le premier article du dépôt.')+'</div></div>')+'</div>';
 }
 function aTeams(){
   const C=ctx();
