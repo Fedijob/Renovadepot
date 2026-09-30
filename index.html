@@ -275,10 +275,11 @@ button,input,select,textarea{font:inherit;color:inherit}
 .bon td{padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
 .sig{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px;font-size:11.5px;color:var(--muted)}
 .sig div{border-top:1px solid var(--line2);padding-top:7px;min-height:52px}
+#print{display:none}
 @media print{
   body *{visibility:hidden}
   #print,#print *{visibility:visible}
-  #print{position:absolute;inset:0;padding:26px;background:#fff;color:#000;font-size:12px}
+  #print{display:block;position:absolute;inset:0;padding:26px;background:#fff;color:#000;font-size:12px}
   #print .sig div{border-top:1px solid #999}
   #print th,#print td{border-bottom:1px solid #ddd}
   #print .meta span{color:#666}
@@ -1175,7 +1176,7 @@ function bon(slip){
       return '<tr><td>'+esc(i?i.name:'—')+(m.note?'<br><span style="color:var(--muted);font-size:11.5px">'+esc(m.note)+'</span>':'')+'</td>'+
       '<td style="text-align:right">'+fmtq(m.qty)+' '+esc(i?i.unit:'')+'</td><td style="text-align:right">'+money(m.qty*(m.unitCost||0))+'</td></tr>'}).join('')+
     '</tbody></table><div class="row" style="margin-top:12px"><div class="grow" style="font-weight:600">Valeur totale engagée</div><b>'+money(tot)+'</b></div>'+
-    '<div class="hint">Le matériel reste sous la responsabilité de l\u2019équipe jusqu\u2019à sa restitution au dépôt.</div>'+
+    '<div class="hint">Le matériel pris est sous la responsabilité de l\u2019équipe.</div>'+
     '<div class="sig"><div>Le magasinier — nom et signature</div><div>Le chef d\u2019équipe — nom et signature</div></div></div>';
   $('#print').innerHTML=h;
   sheet(h+'<div class="acts"><button class="btn" data-a="close">Fermer</button>'+
@@ -1248,7 +1249,7 @@ function bonPDF(slip){
   doc.setFont('helvetica','bold');doc.text('Valeur totale engagée',L,y);
   doc.text(fmtq(Math.round(tot*100)/100)+' '+cur,R,y,{align:'right'});doc.setFont('helvetica','normal');
   y+=12;doc.setFontSize(8.5);doc.setTextColor(130);
-  doc.text('Le matériel reste sous la responsabilité de l\u2019équipe jusqu\u2019à sa restitution au dépôt.',L,y);
+  doc.text('Le matériel pris est sous la responsabilité de l\u2019équipe.',L,y);
   doc.setTextColor(20);y+=20;
   doc.setDrawColor(180);doc.line(L,y,L+70,y);doc.line(110,y,110+70,y);y+=5;
   doc.setFontSize(9);doc.setTextColor(110);
