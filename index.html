@@ -446,7 +446,7 @@ function compute(moves){
     else if(m.type==='return'){oh.set(it,(oh.get(it)||0)+m.qty);const k=m.teamId+'|'+it;held.set(k,(held.get(k)||0)-m.qty)}}
   return {onHand:oh,held};
 }
-function valid(c){for(const v of c.onHand.values())if(v<-EPS)return false;for(const v of c.held.values())if(v<-EPS)return false;return true}
+function valid(c){for(const v of c.held.values())if(v<-EPS)return false;return true}
 function ctx(){const c=compute(DB.moves);
   const items=new Map(DB.items.map(i=>[i.id,i])),teams=new Map(DB.teams.map(t=>[t.id,t]));
   const heldItem={};for(const[k,v]of c.held){const it=k.split('|')[1];heldItem[it]=(heldItem[it]||0)+v}
@@ -601,7 +601,7 @@ function wNewChantierSheet(){
 }
 function wAddSheet(cid){
   const c=chantierById(cid);if(!c)return;
-  const avail=DB.items.filter(i=>!i.archived&&onHand(i.id)>EPS).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  const avail=DB.items.filter(i=>!i.archived).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
   if(!avail.length)return toast('Aucun matériel disponible au dépôt.','bad');
   sheet('<h2>Ajouter du matériel</h2><p class="lead">Chantier : '+esc(c.name)+'</p>'+
     '<div class="f"><label>Date</label><input id="add-date" type="date" value="'+today()+'" max="'+today()+'" style="font-size:16px;padding:13px 16px"></div>'+
@@ -629,7 +629,7 @@ function wLineSheet(moveId){
   const m=DB.moves.find(x=>x.id===moveId);if(!m||m.teamId!==SESSION.teamId)return;
   const cur=ctx().items.get(m.itemId);
   // available items = things in stock, plus the current item (even if now 0, so it stays selectable)
-  const opts=DB.items.filter(i=>!i.archived&&(onHand(i.id)>EPS||i.id===m.itemId)).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  const opts=DB.items.filter(i=>!i.archived).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
   sheet('<h2>Modifier la ligne</h2><p class="lead">Corrigez une erreur de saisie.</p>'+
     '<div class="f"><label>Date</label><input id="le-date" type="date" value="'+m.date+'" max="'+today()+'" style="font-size:16px;padding:13px 16px"></div>'+
     '<div class="f"><label>Matériel</label><select id="le-item" style="font-size:16px;padding:13px 16px">'+
@@ -777,7 +777,7 @@ function aStock(){
       '<div class="ttl">'+esc(i.name)+'</div>'+
       '<div class="sub">'+esc(i.cat||'Sans catégorie')+' · '+money(i.cost||0)+'</div>'+
       '<div class="row" style="margin-top:9px"><div class="grow"><div class="n'+(oh<=0?' zero':'')+'" style="font-size:19px'+(low?';color:var(--amber)':'')+'">'+fmtq(oh)+'</div><div class="u">dispo'+(out?' · '+fmtq(out)+' sorti':'')+'</div></div></div>'+
-      '<button class="btn go" data-a="mv-out" data-id="'+i.id+'"'+(oh<=0?' disabled':'')+' style="width:100%;justify-content:center">Sortir</button>'+
+      '<button class="btn go" data-a="mv-out" data-id="'+i.id+'" style="width:100%;justify-content:center">Sortir</button>'+
       '<div class="row" style="margin-top:10px"><button class="link" data-a="item-edit" data-id="'+i.id+'">Modifier</button>'+
       '<div class="grow"></div><button class="link" data-a="adjust" data-id="'+i.id+'">Réappro.</button></div></div></div>'}).join('')
   :'<div class="card" style="grid-column:1/-1"><div class="empty"><b>Aucun article</b>'+(state.q?'Rien ne correspond à cette recherche.':'Ajoutez le premier article du dépôt.')+'</div></div>')+'</div>'+
@@ -1033,7 +1033,7 @@ function moveSheet(kind,itemId){ // kind 'issue' | 'return'
   const admin=isAdmin();
   const teamId=admin?null:SESSION.teamId;
   let pool;
-  if(kind==='issue') pool=DB.items.filter(i=>!i.archived&&onHand(i.id)>EPS);
+  if(kind==='issue') pool=DB.items.filter(i=>!i.archived);
   else pool=admin?DB.items.filter(i=>!i.archived&&(C.heldItem[i.id]||0)>EPS):heldOf(teamId).map(h=>C.items.get(h.itemId)).filter(Boolean);
   if(!pool.length)return toast(kind==='issue'?'Aucun article disponible.':'Aucun matériel à rendre.','bad');
   if(!DB.teams.filter(t=>!t.archived).length)return toast('Créez d\u2019abord une équipe.','bad');
@@ -1630,7 +1630,6 @@ const A={
     const iid=val('add-item'),q=num(val('add-qty')),dt=val('add-date')||today();
     if(!iid)return toast('Choisissez un matériel.','bad');
     if(q<=0)return toast('Indiquez une quantité.','bad');
-    if(q>onHand(iid)+EPS)return toast('Seulement '+fmtq(onHand(iid))+' disponible au dépôt.','bad');
     const slip=applyMove('issue',SESSION.teamId,[{itemId:iid,qty:q,cond:'good'}],null,'',c.name,dt,cid);
     if(!slip)return toast('Impossible d\u2019enregistrer.','bad');
     close();commit();const it=ctx().items.get(iid);toast((it?it.name:'Matériel')+' × '+fmtq(q)+' ajouté.','ok')},
