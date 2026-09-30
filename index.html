@@ -1157,8 +1157,7 @@ function menuSheet(){
     '<div class="f"><label>Séparateur CSV</label><select id="st-sep"><option value=";"'+(DB.settings.sep===';'?' selected':'')+'>; (Excel FR)</option><option value=","'+(DB.settings.sep===','?' selected':'')+'>,</option></select></div>'+
     '<button class="cta" style="margin:4px 0 16px" data-a="set-save">Enregistrer</button>'+
     '<div class="pair"><button class="btn go" data-a="xls-open">Télécharger un relevé</button><button class="btn" data-a="csv-inv">Export inventaire</button></div>'+'<div class="pair"><button class="btn" data-a="csv-backup">Sauvegarde</button><button class="btn" data-a="csv-ledger">Export journal</button></div>'+
-    '<div class="pair"><button class="btn" data-a="restore">Restaurer</button><button class="btn" data-a="theme">Clair / sombre</button></div>'+
-    '<div class="pair"><button class="btn bad" data-a="erase">Tout effacer</button><span></span></div>'
+    '<div class="pair"><button class="btn" data-a="restore">Restaurer</button><button class="btn" data-a="theme">Clair / sombre</button></div>'
    :'<div class="pair"><button class="btn" data-a="theme">Clair / sombre</button><button class="btn" data-a="logout">Se déconnecter</button></div>'));
 }
 function bon(slip){
@@ -1602,7 +1601,7 @@ const A={
     const n=c==='light'?'dark':'light';r.setAttribute('data-theme',n);localStorage.setItem('depot.theme',n);close();render()},
   'li-admin':()=>sheet('<h2>Espace responsable</h2><p class="lead">Réservé au magasinier.</p>'+
     '<div class="f"><label>Code d\u2019accès</label><input id="pin" type="password" inputmode="numeric" autocomplete="off"></div>'+
-    '<div class="hint">Code par défaut : 1234 — modifiable ensuite.</div>'+
+    '<div class="hint">Réservé au responsable du dépôt.</div>'+
     '<div class="acts"><button class="btn" data-a="close">Annuler</button><button class="btn go" data-a="li-admin-go">Entrer</button></div>'),
   'li-admin-go':()=>{if(val('pin').trim()!==String(DB.settings.adminPin))return toast('Code incorrect.','bad');
     close();state.view='home';setSession({role:'admin'})},
