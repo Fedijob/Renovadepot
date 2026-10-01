@@ -1388,7 +1388,7 @@ function teamMonthRows(teamId,from,to,plabel){
   rows.push([]);
 
   const HDR=['Date','Bon','Article','Catégorie','Chantier','Quantité','Unité','Valeur unitaire','Valeur totale','Retour prévu'];
-  const outs=DB.moves.filter(m=>m.teamId===teamId&&m.type==='issue'&&m.date>=from&&m.date<=to&&moveVisible(m))
+  const outs=DB.moves.filter(m=>m.teamId===teamId&&m.type==='issue'&&m.date>=from&&m.date<=to)
     .sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.ts-b.ts);
   rows.push([XT('MATÉRIEL PRIS DANS LE MOIS',6)]);
   const HDR2=['Date','Bon','Article','Catégorie','Quantité','Unité','Valeur unitaire','Valeur totale','Retour prévu'];
@@ -1431,7 +1431,7 @@ function synthRows(teams,from,to,plabel){
   rows.push([XT('Synthèse — '+plabel,6)]);
   rows.push([XT('Période',6),XT(fmtd(from)+(from!==to?' au '+fmtd(to):''))]);
   rows.push([]);
-  const allOuts=DB.moves.filter(m=>m.type==='issue'&&m.date>=from&&m.date<=to&&moveVisible(m));
+  const allOuts=DB.moves.filter(m=>m.type==='issue'&&m.date>=from&&m.date<=to);
   const tQty=allOuts.reduce((s,m)=>s+m.qty,0);
   const tVal=allOuts.reduce((s,m)=>s+m.qty*(m.unitCost||0),0);
   rows.push([XT('TOTAUX DU DÉPÔT SUR LA PÉRIODE',6)]);
@@ -1442,7 +1442,7 @@ function synthRows(teams,from,to,plabel){
     'Retours (lignes)','Valeur rendue','Encore détenu'].map(h=>XT(h,2)));
   let qy=0,a=0,b=0,c=0;
   teams.forEach(t=>{
-    const outs=DB.moves.filter(m=>m.teamId===t.id&&m.type==='issue'&&m.date>=from&&m.date<=to&&moveVisible(m));
+    const outs=DB.moves.filter(m=>m.teamId===t.id&&m.type==='issue'&&m.date>=from&&m.date<=to);
     const rets=DB.moves.filter(m=>m.teamId===t.id&&m.type==='return'&&m.date>=from&&m.date<=to);
     const qo=outs.reduce((s,m)=>s+m.qty,0);
     const vo=outs.reduce((s,m)=>s+m.qty*(m.unitCost||0),0);
@@ -1504,7 +1504,7 @@ function doExportPDF(from,to,tid,plabel,fname){
   const money2=v=>fmtq(Math.round(v*100)/100)+' '+cur;
   let firstPage=true;
   if(!tid){
-    const allOuts=DB.moves.filter(m=>m.type==='issue'&&m.date>=from&&m.date<=to&&moveVisible(m));
+    const allOuts=DB.moves.filter(m=>m.type==='issue'&&m.date>=from&&m.date<=to);
     const tQty=allOuts.reduce((s,m)=>s+m.qty,0);
     const tVal=allOuts.reduce((s,m)=>s+m.qty*(m.unitCost||0),0);
     y=18; doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(14);
@@ -1533,7 +1533,7 @@ function doExportPDF(from,to,tid,plabel,fname){
     doc.text([team.leader,team.site,'Édité le '+fmtd(today())].filter(Boolean).join('   ·   '),L,y);
     doc.setTextColor(20);y+=6;line();y+=7;
     // ---- matériel pris, groupé par chantier ----
-    const outs=DB.moves.filter(m=>m.teamId===team.id&&m.type==='issue'&&m.date>=from&&m.date<=to&&moveVisible(m)).sort((a,b)=>a.date<b.date?-1:1);
+    const outs=DB.moves.filter(m=>m.teamId===team.id&&m.type==='issue'&&m.date>=from&&m.date<=to).sort((a,b)=>a.date<b.date?-1:1);
     doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('Matériel pris',L,y);y+=6;
     if(!outs.length){doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(120);doc.text('Aucune sortie sur la période.',L,y);doc.setTextColor(20);y+=7;}
     else{
