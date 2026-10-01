@@ -305,7 +305,10 @@ const pad=n=>String(n).padStart(4,'0');
 const ymd=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dd};
 const today=()=>ymd(new Date());
 const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:0};
-const fmtq=n=>{n=Math.round(n*1000)/1000;return n.toLocaleString('fr-FR',{maximumFractionDigits:3})};
+const fmtq=n=>{if(!isFinite(n))n=0;n=Math.round(n*1000)/1000;const neg=n<0;n=Math.abs(n);
+  let [int,dec]=n.toFixed(3).split('.');dec=(dec||'').replace(/0+$/,'');
+  int=int.replace(/\B(?=(\d{3})+(?!\d))/g,'\u00A0');
+  return (neg?'-':'')+int+(dec?','+dec:'')};
 const fmtd=iso=>{if(!iso)return '';const p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0]};
 const money=n=>fmtq(Math.round(n*100)/100)+' '+(DB.settings.currency||'€');
 const val=id=>{const e=document.getElementById(id);return e?e.value:''};
@@ -720,11 +723,6 @@ function aHome(){
     '<div class="v num">'+money(mVal)+'</div></div><div class="pct">'+fmtq(mQty)+' art.</div></div>'+
     '<div class="hint">Total pris ce mois-ci : '+fmtq(mQty)+' articles pour '+money(mVal)+'.</div>'+
     '<button class="btn go" data-a="xls-open" style="width:100%;margin-top:12px;justify-content:center;text-align:center">Télécharger le relevé du mois</button></div>'+
-  '<div class="card"><div class="big"><div><div class="l" style="font-size:12.5px;color:var(--muted)">Valeur présente en dépôt</div>'+
-    '<div class="v num">'+money(inVal)+'</div></div><div class="pct">'+pctIn+'%</div></div>'+
-    '<div class="track"><i style="width:'+pctIn+'%"></i></div>'+
-    '<div class="hint">'+money(outVal)+' sont actuellement sur les chantiers.</div></div>'+
-  '<button class="cta" data-a="mv-out">Enregistrer une sortie →</button>'+
   '</div><div>'+
   '<div class="sec"><h2>Mouvements récents</h2><button class="link" data-v="log">Tout voir</button></div>'+
   (recent.length?recent.map(mvRow).join(''):'<div class="card"><div class="empty">Aucun mouvement.</div></div>')+
@@ -1424,17 +1422,6 @@ function teamMonthRows(teamId,from,to,plabel){
   if(!rets.length)rows.push([XT('Aucun retour sur la période')]);
   else rows.push([XT('Total',6),null,null,null,XN(qR,4),null,null,XN(tR,5)]);
   rows.push([]);
-
-  const still=heldAsOf(teamId,to);
-  rows.push([XT('ENCORE EN POSSESSION AU '+fmtd(to),6)]);
-  rows.push(['Article','Catégorie','Quantité','Unité','Valeur unitaire','Valeur engagée','Retour prévu','Retard (jours)'].map(h=>XT(h,2)));
-  let tS=0;
-  still.forEach(l=>{const i=C.items.get(l.itemId)||{},v=l.qty*(i.cost||0);tS+=v;
-    const d=dueFor(teamId,l.itemId),late=d&&d<to?days(d,to):0;
-    rows.push([XT(i.name||'—'),XT(i.cat||''),XN(l.qty,4),XT(i.unit||''),XN(i.cost||0,3),XN(v,3),
-      XT(d?fmtd(d):'—'),late?XN(late,4):XT('')])});
-  if(!still.length)rows.push([XT('Tout est rentré au dépôt')]);
-  else rows.push([XT('Total',6),null,null,null,null,XN(tS,5)]);
   return rows;
 }
 /* ---- feuille de synthèse ---- */
@@ -1568,14 +1555,6 @@ function doExportPDF(from,to,tid,plabel,fname){
       doc.text('TOTAL PRIS',L,y);doc.text(fmtq(gQ),150,y,{align:'right'});doc.text(money2(gT),R,y,{align:'right'});
       doc.setFont('helvetica','normal');y+=9;
     }
-    // ---- encore en possession ----
-    const held=heldAsOf(team.id,to);
-    need(14);doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('Encore en possession au '+fmtd(to),L,y);y+=6;
-    if(!held.length){doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(120);doc.text('Tout est rentré au dépôt.',L,y);doc.setTextColor(20);y+=7;}
-    else{let ht=0;doc.setFont('helvetica','normal');doc.setFontSize(9.5);
-      held.forEach(l=>{const i=C.items.get(l.itemId)||{},v=l.qty*(i.cost||0);ht+=v;need(7);line();y+=4;
-        doc.text(String(i.name||'—').slice(0,46),L,y);doc.text(fmtq(l.qty)+' '+(i.unit||''),150,y,{align:'right'});doc.text(money2(v),R,y,{align:'right'});y+=3});
-      line();y+=4;doc.setFont('helvetica','bold');doc.text('Total engagé',L,y);doc.text(money2(ht),R,y,{align:'right'});doc.setFont('helvetica','normal');y+=9;}
   });
   doc.save('releve-'+(tid?slug(ts[0].name):'toutes-equipes')+'-'+fname+'.pdf');
   toast('Relevé PDF téléchargé.','ok');
